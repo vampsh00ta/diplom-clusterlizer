@@ -1,2 +1,6 @@
-.idea/
-.DS_Store
+lib64/**/__pycache__/
+lib/**/__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+**/.DS_Store
