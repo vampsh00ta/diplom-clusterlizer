@@ -1,0 +1,77 @@
+version: "3.4"
+
+services:
+
+
+
+
+#  db:
+#    image: postgres:14.6
+#    restart: always
+#    hostname: db
+#    environment:
+#      POSTGRES_DB: "market_api"
+#      POSTGRES_USER: "market_api"
+#      POSTGRES_PASSWORD: "market_api"
+#    volumes:
+#      - postgres_data_main:/var/lib/postgres
+#
+
+
+
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq
+    volumes:
+      - rabbitmq_fastapi:/var/lib/rabbitmq/mnesia/
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+
+  redis:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_cache:/data
+  fastapi_main:
+    image: main
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    restart: always
+    links:
+      - rabbitmq
+#      - db
+      - redis
+
+  fastapi_migration:
+      image: main
+      command: alembic revision --autogenerate -m 'a'& alembic upgrade head
+      restart: on-failure
+      env_file:
+        - .env
+      links:
+        - fastapi_main
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  postgres_data_main:
+  broker_data:
+  rabbitmq_fastapi:
+  redis_cache:
+    driver: local
+
+
+
