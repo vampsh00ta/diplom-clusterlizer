@@ -1,0 +1,66 @@
+app:
+  name: 'publicapi'
+  version: '1.0.0'
+  port: 8080
+
+gprc_client_ports:
+  auth: "auth:8081"
+
+logger:
+  log_level: 'debug'
+
+front:
+  static: './front'
+
+kafka:
+  url: localhost:9092
+  keyword_topic: keywordAdder
+  speciality_topic: specialityAdder
+
+postgres:
+  pool_max: 10
+  username: jobsearcher
+  db: jobsearcher
+  password: jobsearcher
+  host: jobsearcherdb
+  host_docker: localhost
+  port: 5432
+
+telegram:
+  api_token: 7586915621:AAFvtUvBoGMUexgy2HapD2kGI2TQ1RbFBQo
+
+parsers:
+  enable: false
+  duration: 5m
+  ozon:
+    all_url: 'https://job-api.ozon.ru/vacancy'
+    all_data: 'page=%d&limit=50'
+    one_url: 'https://job-api.ozon.ru/vacancy/'
+    one_data: '%s'
+    link: 'https://job.ozon.ru/vacancy/%s'
+  mts:
+    all_url: 'https://job.mts.ru/query'
+    all_data: '{"operationName":"jobs","variables":{"pageRequest":{"from":%d,"to":%d,"fid":"0","lid":"0","limitPages":2,"limitRecords":10,"desc":true},"onlyFacets":false,"filter":{"cities":[],"filter":""}},"query":"query jobs($pageRequest: PageRequest!, $onlyFacets: Boolean, $filter: JobFilter) {\n  jobs(pageRequest: $pageRequest, onlyFacets: $onlyFacets, filter: $filter) {\n    items {\n      ...jobCard\n      __typename\n    }\n    pageInfo {\n      ...pageInfo\n      __typename\n    }\n    possibleFilters {\n      ...jobPossibleFilters\n      __typename\n    }\n    hasForDisabledPerson\n    hasRemoteWork\n    hasInternships\n    __typename\n  }\n}\n\nfragment jobCard on Job {\n  id\n  name\n  isInternship\n  salary\n  description\n  city {\n    id\n    name\n    slug\n    region {\n      id\n      name\n      __typename\n    }\n    __typename\n  }\n  category {\n    id\n    name\n    slug\n    __typename\n  }\n  subcategory {\n    id\n    name\n    slug\n    __typename\n  }\n  advantages {\n    id\n    name\n    __typename\n  }\n  __typename\n}\n\nfragment pageInfo on PageInfo {\n  fid\n  lid\n  isNext\n  nextPages\n  page\n  __typename\n}\n\nfragment jobPossibleFilters on JobPossibleFilters {\n  blocks {\n    id\n    name\n    __typename\n  }\n  cities {\n    id\n    name\n    __typename\n  }\n  metros {\n    id\n    name\n    color\n    __typename\n  }\n  categories {\n    id\n    name\n    subcategories {\n      id\n      name\n      __typename\n    }\n    __typename\n  }\n  modes\n  experiences\n  __typename\n}\n"}'
+    one_url: 'https://job.mts.ru/query'
+    one_data: '{"operationName":"job","variables":{"id":"%s"},"query":"query job($id: ID!) {\n  job(jobID: $id) {\n    ...job\n    __typename\n  }\n}\n\nfragment job on Job {\n  id\n  name\n  description\n  requirements\n  experience\n  conditions\n  descriptionAboutProject\n  mode\n  address\n  salary\n  isInternship\n  isActual\n  forDisabledPerson\n  isReferal\n  inviteIT\n  refStartAt\n  refEndAt\n  reward\n  isMass\n  isRemoteWork\n  publishAt\n  canAddFeedback\n  brand {\n    id\n    name\n    __typename\n  }\n  block {\n    id\n    name\n    imageURL\n    __typename\n  }\n  category {\n    id\n    name\n    slug\n    hasSubcategory\n    __typename\n  }\n  subcategory {\n    id\n    name\n    slug\n    __typename\n  }\n  metro {\n    id\n    name\n    color\n    line\n    __typename\n  }\n  city {\n    id\n    name\n    slug\n    __typename\n  }\n  advantages {\n    ...advantage\n    __typename\n  }\n  __typename\n}\n\nfragment advantage on Advantage {\n  id\n  name\n  imageURL\n  __typename\n}\n"}'
+    link: 'https://job.mts.ru/vacancy/%s'
+  sber:
+    all_url: 'https://rabota.sber.ru/public/app-candidate-public-api-gateway/api/v1/publications'
+    all_data: '?skip=%d&take=50'
+    one_url: ''
+    one_data: ''
+    link: 'https://rabota.sber.ru/search/%d/'
+  tinkoff:
+    all_url: 'https://www.tbank.ru/pfpjobs/papi/getVacancies'
+    all_data: '{"filters":{"city":["lyuboj-gorod"]},"pagination":{"it":{"offset":%d,"isFinished":false}}}'
+    one_url: 'https://hrsites-api-vacancies.tbank.ru/vacancies/public/api/platform/v2/getVacancy'
+    one_data: '?urlSlug=%s'
+    link: 'https://www.tbank.ru/career/it/%s/%s'
+  lamoda:
+    all_url: 'https://job.lamoda.ru/api/vacancies'
+    all_data: '?sort_by=updated_at.desc&limit=50&offset=%d&title_ru=&status=1&category_id=15' # category=15 - TECH отдел, status=1 - актуальные вакансии
+    one_url: 'https://job.lamoda.ru/api/vacancies/view/'
+    one_data: '%s'
+    link: 'https://job.lamoda.ru/vacancies/%s'
+
+

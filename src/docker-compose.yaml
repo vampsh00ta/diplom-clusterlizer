@@ -1,0 +1,87 @@
+#version: '3.8'
+services:
+  publicapi:
+    build:
+      context: .
+      dockerfile: cmd/publicapi/Dockerfile
+    container_name: publicapi
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition:  service_started
+    networks:
+      - db
+      - kafka
+  auth:
+    build:
+      context: .
+      dockerfile: ./cmd/auth/Dockerfile
+    container_name: auth
+    ports:
+      - "8081:8081"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db
+  tg:
+    build:
+      context: .
+      dockerfile: cmd/tg/Dockerfile
+    container_name: tg
+    ports:
+      - "8082:8082"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    networks:
+      - db
+  db:
+    image: postgres:14.6
+    restart: always
+    container_name: jobsearcherdb
+    hostname: localhost
+    environment:
+      POSTGRES_DB: jobsearcher
+      POSTGRES_USER: jobsearcher
+      POSTGRES_PASSWORD: jobsearcher
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d jobsearcher -U jobsearcher"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db
+  migrate:
+    image: migrate/migrate
+    container_name: db_migrations
+    networks:
+      - db
+    volumes:
+      - ./migration:/migration
+    links:
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
+    command: -path=./migration -database postgresql://jobsearcher:jobsearcher@jobsearcherdb:5432/jobsearcher?sslmode=disable up
+networks:
+  db:
+    driver: bridge
+  kafka:
+
+
+volumes:
+  postgres_data:

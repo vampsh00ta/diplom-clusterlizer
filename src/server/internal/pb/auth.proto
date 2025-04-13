@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "./pb";
+
+service Auth {
+  rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse) {}
+  rpc AcceptToken(AcceptTokenRequest) returns (AcceptTokenResponse){}
+  rpc CreateLink(CreateLinkRequest) returns (CreateLinkResponse){}
+
+}
+//VerifyToken
+message VerifyTokenRequest{
+  string AccessToken = 1;
+}
+message VerifyTokenResponse{
+
+  bool   Status   = 1;
+}
+
+
+
+//AcceptToken
+message AcceptTokenRequest{
+  string Hash = 1;
+}
+message AcceptTokenResponse{
+  string   AccessToken   = 1;
+}
+
+//CreateLink
+message CreateLinkRequest  {
+  int32 ID            = 1;
+  optional string  FirstName=2;
+  optional   string   LastName   =3;
+  optional  string   Username =4;
+  optional  string   PhotoUrl =5;
+}
+message CreateLinkResponse  {
+  string Hash = 1;
+}
+
