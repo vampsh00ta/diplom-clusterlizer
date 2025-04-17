@@ -2,12 +2,13 @@ package publicapi
 
 import (
 	documentsrvc "clusterlizer/internal/service/document"
-	filtersrvc "clusterlizer/internal/service/filter"
+
 	"github.com/segmentio/kafka-go"
 
 	psqlrep "clusterlizer/internal/storage/postgres"
 	"clusterlizer/pkg/pgxclient"
 	"context"
+
 	"go.uber.org/zap"
 )
 
@@ -64,30 +65,23 @@ func Run(cfg *Config) {
 
 	//Services
 
-	fitlerImpl := filtersrvc.New(
-		storage,
-	)
-
-	documentImpl := documentsrvc.New(
+	documentImpl := documentsrvc.NewKafka(
 		documentSenderProducer,
 		storage,
 		logger,
 	)
-	_ = fitlerImpl
-	_ = documentImpl
 
 	// HTTP server
 	logger.Info("starting HTTP server...")
 
-	app := newHTTP(cfg, logger)
-	registerHTPP(app, cfg)
+	app := registerHTPP(cfg, logger, documentImpl)
 
 	// Kafka consumers
 	logger.Info("starting kafka consumer...")
 
-	if err = startKafkaConsumers(cfg.Kafka.Consumer, logger); err != nil {
-		logger.Fatal("kafka consumer: %w", zap.Error(err))
-	}
+	// if err = startKafkaConsumers(cfg.Kafka.Consumer, logger); err != nil {
+	// 	logger.Fatal("kafka consumer: %w", zap.Error(err))
+	// }
 
 	if err = app.Listen(":" + cfg.App.Port); err != nil {
 		logger.Fatal("Ошибка запуска сервера: %v", zap.Error(err))
