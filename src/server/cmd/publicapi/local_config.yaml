@@ -24,9 +24,8 @@ kafka:
 
 postgres:
   pool_max: 10
-  username: jobsearcher
-  db: jobsearcher
-  password: jobsearcher
+  username: diplom
+  db: diplom
+  password: diplom
   host: localhost
-  host_docker: localhost
-  port: 5432
+  port: 6432
