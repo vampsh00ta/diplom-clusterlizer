@@ -6,7 +6,7 @@ type RequestID string
 
 type Request struct {
 	ID        RequestID
-	Result    []byte
+	Result    *[]byte
 	Status    Status
 	CreatedAt time.Time
 	UpdatedAt time.Time

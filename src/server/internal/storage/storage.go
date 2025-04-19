@@ -12,7 +12,7 @@ type Storage interface {
 }
 
 type Request interface {
-	CreateRequest(ctx context.Context, params CreateRequestParams) error
+	CreateRequest(ctx context.Context, params CreateRequestParams) (entity.Request, error)
 	UpdateRequest(ctx context.Context, params UpdateRequestParams) (entity.Request, error)
 	GetAllRequests(ctx context.Context) ([]entity.Request, error)
 }

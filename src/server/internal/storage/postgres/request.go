@@ -3,7 +3,6 @@ package postgresrep
 import (
 	"clusterlizer/internal/entity"
 	"clusterlizer/internal/storage"
-
 	"context"
 	"fmt"
 	"time"
@@ -22,7 +21,7 @@ var requestFields = []string{
 
 type request struct {
 	ID     entity.RequestID `db:"id"`
-	Result []byte           `db:"result"`
+	Result *[]byte          `db:"result"`
 	Status string           `db:"status"`
 
 	CreatedAt time.Time `db:"created_at"`
@@ -60,26 +59,34 @@ func (s *Storage) GetAllRequests(ctx context.Context) ([]entity.Request, error) 
 	return requestToEntity(rowModels), nil
 }
 
-func (s *Storage) CreateRequest(ctx context.Context, params storage.CreateRequestParams) error {
+func (s *Storage) CreateRequest(ctx context.Context, params storage.CreateRequestParams) (entity.Request, error) {
 	client, err := s.db.Client(ctx)
 	if err != nil {
-		return fmt.Errorf("client: %w", err)
+		return entity.Request{}, fmt.Errorf("client: %w", err)
 	}
 
 	q, args, err := sq.Insert(tableRequest).
-		Columns(fieldID).
+		Columns(fieldID, fieldStatus).
+		Values(params.ID, entity.StatusCreated.String()).
+		Suffix("RETURNING *").
 		PlaceholderFormat(sq.Dollar).
-		Values(params.ID).
 		ToSql()
-
+	fmt.Print(q)
 	if err != nil {
-		return fmt.Errorf("query builder: %w", err)
+		return entity.Request{}, fmt.Errorf("query builder: %w", err)
 	}
-	if err := client.QueryRow(ctx, q, args...).Scan(); err != nil {
-		return pgError(fmt.Errorf("row query: %w", err))
+	row, err := client.Query(ctx, q, args...)
+	if err != nil {
+		return entity.Request{}, pgError(fmt.Errorf("row query: %w", err))
+	}
+	defer row.Close()
+
+	rowModel, err := pgx.CollectOneRow(row, pgx.RowToStructByName[request])
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("collect rows: %w", err)
 	}
 
-	return nil
+	return requestToEntity([]request{rowModel})[0], nil
 }
 
 func (s *Storage) UpdateRequest(ctx context.Context, params storage.UpdateRequestParams) (entity.Request, error) {
@@ -103,7 +110,7 @@ func (s *Storage) UpdateRequest(ctx context.Context, params storage.UpdateReques
 	if err != nil {
 		return entity.Request{}, fmt.Errorf("query builder: %w", err)
 	}
-	
+
 	var req request
 	if err := client.QueryRow(ctx, q, args...).Scan(&req); err != nil {
 		return entity.Request{}, pgError(fmt.Errorf("row query: %w", err))

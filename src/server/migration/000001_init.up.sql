@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS request (
     result JSONB,
     status VARCHAR(50),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP  SET DEFAULT now()
+    updated_at TIMESTAMP  NOT NULL DEFAULT now()
 );
 
 CREATE TABLE outbox (

@@ -5,5 +5,5 @@ import (
 )
 
 type Service interface {
-	SendToBroker(ctx context.Context, data any) error
+	SendDocumentNames(ctx context.Context, names []string) error
 }

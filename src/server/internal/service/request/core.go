@@ -5,6 +5,7 @@ import (
 	"clusterlizer/internal/storage"
 	"clusterlizer/pkg/utils"
 	"context"
+	"fmt"
 
 	"go.uber.org/zap"
 )
@@ -34,10 +35,13 @@ type CreateRequestParams struct {
 
 func (s *RequestImpl) CreateRequest(ctx context.Context, params CreateRequestParams) error {
 	s.log.Info("create request")
-
-	return s.storage.Request().CreateRequest(ctx, storage.CreateRequestParams{
+	_, err := s.storage.Request().CreateRequest(ctx, storage.CreateRequestParams{
 		ID: params.ID,
 	})
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+	return nil
 }
 
 type UpdateRequestParams struct {

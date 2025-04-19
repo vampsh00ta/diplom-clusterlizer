@@ -34,5 +34,6 @@ func loadConfig(cfgPath string) (*publicapi.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
+
 	return cfg, nil
 }

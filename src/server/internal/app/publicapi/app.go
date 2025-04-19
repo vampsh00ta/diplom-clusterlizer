@@ -3,12 +3,16 @@ package publicapi
 import (
 	documentsrvc "clusterlizer/internal/service/document"
 	requestsrvc "clusterlizer/internal/service/request"
-
-	"github.com/segmentio/kafka-go"
+	s3srvc "clusterlizer/internal/service/s3"
+	"fmt"
 
 	psqlrep "clusterlizer/internal/storage/postgres"
 	"clusterlizer/pkg/pgxclient"
+	s3client "clusterlizer/pkg/s3"
+
 	"context"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/segmentio/kafka-go"
 
 	"go.uber.org/zap"
 )
@@ -40,11 +44,15 @@ func Run(cfg *Config) {
 			Password: cfg.PG.Password,
 			Host:     cfg.PG.Host,
 		})
+	////S3 client
+	s3Session := s3.NewFromConfig(cfg.S3.Config)
+	s3Client := s3client.NewClient(s3Session, cfg.S3.Bucket)
 
 	// Kafka Producer
+	fmt.Println(cfg.Kafka.Producer)
 	documentSenderProducer := &kafka.Writer{
-		Addr:                   kafka.TCP(cfg.Kafka.Producer.DocumentSender.URL),
-		Topic:                  cfg.Kafka.Producer.DocumentSender.Topic,
+		Addr:                   kafka.TCP(cfg.Kafka.Producer.DocumentNameSender.URL),
+		Topic:                  cfg.Kafka.Producer.DocumentNameSender.Topic,
 		RequiredAcks:           kafka.RequireOne,
 		Balancer:               &kafka.LeastBytes{},
 		Async:                  true,
@@ -57,14 +65,12 @@ func Run(cfg *Config) {
 	defer pg.Close()
 
 	//Storage
-
 	logger.Info("starting storage...")
 
 	storage := psqlrep.New(pg)
 
-	logger.Info("starting services...")
-
 	//Services
+	logger.Info("starting services...")
 
 	documentImpl := documentsrvc.NewKafka(
 		documentSenderProducer,
@@ -75,10 +81,14 @@ func Run(cfg *Config) {
 		storage,
 		logger,
 	)
+	s3Impl := s3srvc.New(
+		logger,
+		s3Client,
+	)
 	// HTTP server
 	logger.Info("starting HTTP server...")
 
-	app := registerHTPP(cfg, logger, documentImpl, requestImpl)
+	app := registerHTPP(cfg, logger, documentImpl, requestImpl, s3Impl)
 
 	// Kafka consumers
 	logger.Info("starting kafka consumer...")

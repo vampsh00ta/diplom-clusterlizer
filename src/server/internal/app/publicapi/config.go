@@ -1,7 +1,11 @@
 package publicapi
 
 import (
+	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+
 	"github.com/ilyakaznacheev/cleanenv"
 	"path"
 )
@@ -12,7 +16,8 @@ type (
 		App   App   `yaml:"app"`
 		PG    PG    `yaml:"postgres"`
 		Front Front `yaml:"front"`
-		Kafka Kafka `yaml:"broker"`
+		Kafka Kafka `yaml:"kafka"`
+		S3    S3    `yaml:"s3"`
 	}
 
 	App struct {
@@ -36,6 +41,10 @@ type (
 	Front struct {
 		Static string `yaml:"static"`
 	}
+	S3 struct {
+		Bucket string `yaml:"bucket"`
+		aws.Config
+	}
 )
 
 type (
@@ -44,7 +53,7 @@ type (
 		Consumer Consumer `yaml:"consumer"`
 	}
 	Producer struct {
-		DocumentSender KafkaBase `yaml:"document_sender"`
+		DocumentNameSender KafkaBase `yaml:"document_name_sender"`
 	}
 	Consumer struct {
 		DocumentSaver KafkaBase `yaml:"document_saver"`
@@ -73,5 +82,10 @@ func NewDefaultConfig(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("error updating env: %w", err)
 	}
 
+	s3Cfg, err := awsconfig.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	cfg.S3.Config = s3Cfg
 	return cfg, nil
 }
