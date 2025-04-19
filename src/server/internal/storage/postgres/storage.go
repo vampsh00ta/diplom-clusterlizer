@@ -3,6 +3,7 @@ package postgresrep
 import (
 	"clusterlizer/internal/storage"
 	"clusterlizer/pkg/pgxclient"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,10 +19,14 @@ func New(db *pgxpool.Pool) *Storage {
 	}
 }
 
-func (s *Storage) City() storage.City {
+func (s *Storage) Request() storage.Request {
 	return s
 }
 
 func (s *Storage) Tx() pgxclient.Manager {
 	return s
+}
+
+func pgError(err error) error {
+	return err
 }

@@ -3,6 +3,7 @@ package publicapi
 import (
 	"clusterlizer/internal/handler/publicapi"
 	documentsrvc "clusterlizer/internal/service/document"
+	requestsrvc "clusterlizer/internal/service/request"
 
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
@@ -19,10 +20,13 @@ func registerHTPP(
 	cfg *Config,
 	log *zap.SugaredLogger,
 	documentSrvc documentsrvc.Service,
+	requestSrvc requestsrvc.Service,
+	//authMiddleware := keyauth.New(keyauth.Config{
+
 ) *fiber.App {
 	app := newFiber(cfg, log)
 	//
-	publicApi := publicapi.New(log, documentSrvc)
+	publicApi := publicapi.New(log, documentSrvc, requestSrvc)
 	//authMiddleware := keyauth.New(keyauth.Config{
 	//	KeyLookup: "cookie:access_token",
 	//	Validator: func(ctx *fiber.Ctx, token string) (bool, error) {

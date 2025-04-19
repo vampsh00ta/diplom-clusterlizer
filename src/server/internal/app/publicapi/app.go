@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	documentsrvc "clusterlizer/internal/service/document"
+	requestsrvc "clusterlizer/internal/service/request"
 
 	"github.com/segmentio/kafka-go"
 
@@ -70,11 +71,14 @@ func Run(cfg *Config) {
 		storage,
 		logger,
 	)
-
+	requestImpl := requestsrvc.NewRequest(
+		storage,
+		logger,
+	)
 	// HTTP server
 	logger.Info("starting HTTP server...")
 
-	app := registerHTPP(cfg, logger, documentImpl)
+	app := registerHTPP(cfg, logger, documentImpl, requestImpl)
 
 	// Kafka consumers
 	logger.Info("starting kafka consumer...")

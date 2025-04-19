@@ -1,5 +1,5 @@
 package publicapi
 
 type errResponse struct {
-	Err error `json:"error"`
+	Error string `json:"error"`
 }

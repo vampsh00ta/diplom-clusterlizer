@@ -8,9 +8,11 @@ import (
 
 type Storage interface {
 	DoInTransaction(ctx context.Context, f pgxclient.TxFunc) error
-	City() City
+	Request() Request
 }
 
-type City interface {
-	GetAllWithVacancyCount(ctx context.Context) ([]entity.CityWithVacancyCount, error)
+type Request interface {
+	CreateRequest(ctx context.Context, params CreateRequestParams) error
+	UpdateRequest(ctx context.Context, params UpdateRequestParams) (entity.Request, error)
+	GetAllRequests(ctx context.Context) ([]entity.Request, error)
 }
