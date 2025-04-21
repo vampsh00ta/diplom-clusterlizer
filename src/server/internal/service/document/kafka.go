@@ -29,6 +29,7 @@ type KafkaImpl struct {
 
 func (s *KafkaImpl) SendDocumentNames(ctx context.Context, names []string) error {
 	s.log.Info("send to broker")
+
 	dataBytes, err := json.Marshal(names)
 	if err != nil {
 		s.log.Errorf("send document marshal: %w", err)

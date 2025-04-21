@@ -71,7 +71,7 @@ func (s *Storage) CreateRequest(ctx context.Context, params storage.CreateReques
 		Suffix("RETURNING *").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
-	fmt.Print(q)
+
 	if err != nil {
 		return entity.Request{}, fmt.Errorf("query builder: %w", err)
 	}

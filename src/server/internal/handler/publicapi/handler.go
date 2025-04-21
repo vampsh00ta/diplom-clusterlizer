@@ -159,6 +159,11 @@ func (h *Handler) getFiles(ctx *fiber.Ctx) ([][]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("file form to bytes: %w", err)
 		}
+		if !correctFileFormat(fileForm.Filename) {
+			h.log.Error(fmt.Errorf("%s; file name:%s", errNowAllowedFileFormat, fileForm.Filename))
+
+			return nil, fmt.Errorf(errNowAllowedFileFormat)
+		}
 		files = append(files, fileBytes)
 	}
 	return files, nil

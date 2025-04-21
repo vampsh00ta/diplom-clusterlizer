@@ -10,23 +10,25 @@ front:
   static: './front'
 
 kafka:
-  consumer:
-    document_sender:
-      url: localhost:9092
-      topic: document_sender
-#      max_bytes: 10**20
-      group: document_sender-group-a
   producer:
+    document_name_sender:
+      url: localhost:9093
+      topic: document_sender
+      #      max_bytes: 10**20
+      group: document_sender-group-a
+  consumer:
     document_saver:
       url: localhost:9092
       topic: document_sender
-      max_bytes: 10mb
+#      max_bytes: 10mb
 
 postgres:
   pool_max: 10
-  username: jobsearcher
-  db: jobsearcher
-  password: jobsearcher
+  username: diplom
+  db: diplom
+  password: diplom
   host: localhost
-  host_docker: localhost
-  port: 5432
+  port: 6432
+
+s3:
+  bucket: diplom.clusterization

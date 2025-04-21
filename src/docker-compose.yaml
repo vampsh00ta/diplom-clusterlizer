@@ -2,7 +2,7 @@
 services:
   publicapi:
     build:
-      context: .
+      context: ./server
       dockerfile: cmd/publicapi/Dockerfile
     container_name: publicapi
     ports:
@@ -11,59 +11,67 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      auth:
-        condition:  service_started
     networks:
       - db
       - kafka
-  auth:
+  model:
     build:
-      context: .
-      dockerfile: ./cmd/auth/Dockerfile
-    container_name: auth
+      context: ./model
+      dockerfile: Dockerfile
+    container_name: model
     ports:
-      - "8081:8081"
+      - "8000:8000"
     restart: always
     depends_on:
       db:
         condition: service_healthy
     networks:
       - db
-  tg:
-    build:
-      context: .
-      dockerfile: cmd/tg/Dockerfile
-    container_name: tg
-    ports:
-      - "8082:8082"
-    restart: always
-    depends_on:
-      db:
-        condition: service_healthy
-      auth:
-        condition: service_started
-    networks:
-      - db
+      - kafka
   db:
     image: postgres:14.6
     restart: always
-    container_name: jobsearcherdb
+    container_name: diplomdb
     hostname: localhost
     environment:
-      POSTGRES_DB: jobsearcher
-      POSTGRES_USER: jobsearcher
-      POSTGRES_PASSWORD: jobsearcher
+      POSTGRES_DB: diplom
+      POSTGRES_USER: diplom
+      POSTGRES_PASSWORD: diplom
     ports:
-      - "5432:5432"
+      - "6432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d jobsearcher -U jobsearcher"]
+      test: [ "CMD-SHELL", "pg_isready -d diplom -U diplom"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
       - db
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2182
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+      image: confluentinc/cp-kafka:7.3.2
+      container_name: broker
+      ports:
+        # To learn about configuring Kafka for access across networks see
+        # https://www.confluent.io/blog/kterafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+        - "9093:9093"
+      depends_on:
+        - zookeeper
+      environment:
+        KAFKA_BROKER_ID: 1
+        KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2182'
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
   migrate:
     image: migrate/migrate
     container_name: db_migrations
@@ -76,7 +84,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: -path=./migration -database postgresql://jobsearcher:jobsearcher@jobsearcherdb:5432/jobsearcher?sslmode=disable up
+    command: -path=./migration -database postgresql://diplom:diplom@localhost:6432/diplomgo rubdock?sslmode=disable up
 networks:
   db:
     driver: bridge

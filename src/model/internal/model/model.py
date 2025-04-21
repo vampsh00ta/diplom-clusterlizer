@@ -87,7 +87,7 @@ html += """
 """
 
 # Сохраняем HTML в файл
-with open("grouped_papers.html", "w", encoding="utf-8") as f:
+with open("../../grouped_papers.html", "w", encoding="utf-8") as f:
     f.write(html)
 
 print("HTML-страница 'grouped_papers.html' успешно создана.")

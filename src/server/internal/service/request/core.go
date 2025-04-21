@@ -35,6 +35,7 @@ type CreateRequestParams struct {
 
 func (s *RequestImpl) CreateRequest(ctx context.Context, params CreateRequestParams) error {
 	s.log.Info("create request")
+
 	_, err := s.storage.Request().CreateRequest(ctx, storage.CreateRequestParams{
 		ID: params.ID,
 	})

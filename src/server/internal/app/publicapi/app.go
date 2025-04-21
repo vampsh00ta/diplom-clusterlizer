@@ -4,8 +4,6 @@ import (
 	documentsrvc "clusterlizer/internal/service/document"
 	requestsrvc "clusterlizer/internal/service/request"
 	s3srvc "clusterlizer/internal/service/s3"
-	"fmt"
-
 	psqlrep "clusterlizer/internal/storage/postgres"
 	"clusterlizer/pkg/pgxclient"
 	s3client "clusterlizer/pkg/s3"
@@ -49,7 +47,6 @@ func Run(cfg *Config) {
 	s3Client := s3client.NewClient(s3Session, cfg.S3.Bucket)
 
 	// Kafka Producer
-	fmt.Println(cfg.Kafka.Producer)
 	documentSenderProducer := &kafka.Writer{
 		Addr:                   kafka.TCP(cfg.Kafka.Producer.DocumentNameSender.URL),
 		Topic:                  cfg.Kafka.Producer.DocumentNameSender.Topic,
