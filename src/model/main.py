@@ -5,7 +5,7 @@ import boto3
 from aiokafka import AIOKafkaConsumer
 from fastapi import FastAPI
 
-
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from internal.config.config import load_config
 from internal.converter.converter import Converter
@@ -16,7 +16,7 @@ from internal.kafka.kafka import KafkaServer
 
 
 
-cfg = load_config("config.yaml")
+cfg = load_config(os.getenv('CONFIG_PATH'))
 app = FastAPI(title='main')
 
 #loggers

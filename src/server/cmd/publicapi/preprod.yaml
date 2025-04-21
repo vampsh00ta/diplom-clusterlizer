@@ -12,13 +12,13 @@ front:
 kafka:
   producer:
     document_name_sender:
-      url: localhost:9093
+      url: kafka:29093
       topic: document_sender
       #      max_bytes: 10**20
       group: document_sender-group-a
   consumer:
     document_saver:
-      url: localhost:9092
+      url: kafka:29093
       topic: document_sender
 #      max_bytes: 10mb
 
@@ -27,7 +27,7 @@ postgres:
   username: diplom
   db: diplom
   password: diplom
-  host: localhost
+  host: diplomdb
   port: 6432
 
 s3:

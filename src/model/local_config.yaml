@@ -1,0 +1,8 @@
+kafka:
+  bootstrap_servers: "kafka:9093"
+  topic: "document_sender"
+  group_id: "document_sender-group-a"
+  max_poll_interval_ms: 300000
+
+s3:
+  bucket: "diplom.clusterization"
