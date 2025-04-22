@@ -22,6 +22,17 @@ kafka:
       topic: document_sender
 #      max_bytes: 10mb
 
+rabbitmq:
+  producer:
+    document_name_sender:
+      url: amqp://guest:guest@localhost:5672/
+      queue_name: document_sender
+
+  consumer:
+    document_saver:
+      url: localhost:9092
+      queue_name: document_saver
+
 postgres:
   pool_max: 10
   username: diplom
