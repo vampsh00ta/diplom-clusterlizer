@@ -43,9 +43,10 @@ func registerHTPP(
 	//})
 	////user
 	publicApiGroup := app.Group(publicApiPrefix)
+
 	publicApiGroup.Post("/uploadFiles", publicApi.UploadFiles)
-	publicApiGroup.Post("/getClusterizations/:uuid", publicApi.GetClusterizations)
-	publicApiGroup.Get("/getCurrentQueue/:uuid", publicApi.GetCurrentQueue)
+	publicApiGroup.Get("/getClusterizations/:id", publicApi.GetClusterizations)
+	//publicApiGroup.Get("/getCurrentQueue/:uuid", publicApi.GetCurrentQueue)
 
 	//front
 	app.Static("/", cfg.Front.Static)
@@ -54,7 +55,11 @@ func registerHTPP(
 }
 
 func newFiber(cfg *Config, logger *zap.SugaredLogger) *fiber.App {
-	app := fiber.New(fiber.Config{AppName: cfg.App.Name})
+	app := fiber.New(
+		fiber.Config{
+			AppName:   cfg.App.Name,
+			BodyLimit: 100 * 1024 * 1024, // this is the default limit of 4MB
+		})
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger.Desugar(),
 	}))

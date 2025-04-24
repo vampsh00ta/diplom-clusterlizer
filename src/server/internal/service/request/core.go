@@ -14,6 +14,8 @@ type Service interface {
 	CreateRequest(ctx context.Context, params CreateRequestParams) error
 	UpdateRequest(ctx context.Context, params UpdateRequestParams) (entity.Request, error)
 	GetAllRequests(ctx context.Context) ([]entity.Request, error)
+	GetRequestByID(ctx context.Context, ID entity.RequestID) (entity.Request, error)
+	GetRequestByIDDone(ctx context.Context, ID entity.RequestID) (entity.Request, error)
 }
 
 func NewRequest(
@@ -66,4 +68,16 @@ func (s *RequestImpl) GetAllRequests(ctx context.Context) ([]entity.Request, err
 	s.log.Info("get all requests")
 
 	return s.storage.Request().GetAllRequests(ctx)
+}
+
+func (s *RequestImpl) GetRequestByID(ctx context.Context, ID entity.RequestID) (entity.Request, error) {
+	s.log.Info("get request by id")
+
+	return s.storage.Request().GetRequestByID(ctx, ID)
+}
+
+func (s *RequestImpl) GetRequestByIDDone(ctx context.Context, ID entity.RequestID) (entity.Request, error) {
+	s.log.Info("get request by id")
+
+	return s.storage.Request().GetRequestByIDDone(ctx, ID)
 }

@@ -1,5 +1,5 @@
 kafka:
-  bootstrap_servers: kafka:29093
+  bootstrap_servers: consumer:29093
   topic: "document_sender"
   group_id: "document_sender-group-a"
   max_poll_interval_ms: 300000

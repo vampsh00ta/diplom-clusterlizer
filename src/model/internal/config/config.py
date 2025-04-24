@@ -8,11 +8,20 @@ class Kafka(BaseModel):
     group_id: str = "ml-model-consumer"
     max_poll_interval_ms: int = 100
 
+class RabbitMQBase(BaseModel):
+    queue_name: str = "ml_jobs"
+    exchange: str = "diplom"
+class RabbiqMQ(BaseModel):
+    url:str = "amqp://guest:guest@localhost/"
+    consumer:RabbitMQBase
+    producer:RabbitMQBase
+
 
 class S3(BaseModel):
     bucket: str
 
 class AppConfig(BaseModel):
+    rabbitmq: RabbiqMQ
     kafka: Kafka
     s3: S3
 

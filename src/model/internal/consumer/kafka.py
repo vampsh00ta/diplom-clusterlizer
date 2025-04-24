@@ -1,48 +1,49 @@
+import logging
+import time
+from collections import defaultdict
+from typing import List, Dict
 
+import boto3
+from aiokafka import AIOKafkaConsumer, TopicPartition
 from internal.config.config import AppConfig
 from internal.converter.converter import Converter
+from internal.model.сlusterizer import Clusterizer
 
-import aio_pika
-from aio_pika import IncomingMessage, Message
-import logging
-from typing import List
+# from internal.model.model import MLModel
 
 
-class RabbitMQServer:
-    def __init__(
-        self,
-        config: AppConfig,
-        logger: logging.Logger,
-        rabbitmq_url: str,
-        s3_client,
-        convertor: Converter
-    ):
+
+
+
+class KafkaServer:
+    def __init__(self,
+             config: AppConfig,
+            logger: logging.Logger,
+             consumer: AIOKafkaConsumer,
+             s3_client,
+            convertor:Converter,
+                 clusterizer:Clusterizer
+                 ):
         self.config = config
-        self.logger = logger
-        self.rabbitmq_url = rabbitmq_url
+        self.consumer = consumer
         self.s3_client = s3_client
         self.convertor = convertor
-        self.connection = None
-        self.channel = None
-        self.queue = None
+        self.logger = logger
+        self.clusterizer = clusterizer
 
     async def start(self):
-        self.connection = await aio_pika.connect_robust(self.rabbitmq_url)
-        self.channel = await self.connection.channel()
-        self.queue = await self.channel.declare_queue(
-            self.config.rabbitmq.queue_name,
-            durable=True
-        )
-        self.logger.info("RabbitMQ consumer started")
-        await self.queue.consume(self.handle_message)
+
+        await self.consumer.start()
+        self.logger.info("Kafka consumer started")
+        await self.consume_loop()
 
     async def stop(self):
-        if self.connection:
-            await self.connection.close()
-            self.logger.info("RabbitMQ consumer stopped")
+        if self.consumer:
+            await self.consumer.stop()
+            self.logger.info("Kafka consumer stopped")
 
-    def __get_files_from_s3(self, filenames: List[str]) -> List[str]:
-        res = []
+    def __get_files_from_s3(self, filenames: List[str]) -> Dict[str, str]:
+        res:Dict[str, str] = defaultdict()
         for filename in filenames:
             self.logger.info(f"Fetching {filename} from S3...")
 
@@ -55,25 +56,36 @@ class RabbitMQServer:
             data = self.convertor.file_to_str(body)
             if data is None:
                 self.logger.error(f"Unknown type {filename}, {len(response['Body'].read())} bytes")
-            else:
-                res.append(data)
-                self.logger.info(f"Fetched {filename}, {len(response['Body'].read())} bytes")
+                continue
+
+            self.logger.info(f"Fetched {filename}, {len( response['Body'].read())} bytes")
+
+            res[filename] = data
         return res
 
-    async def handle_message(self, message: IncomingMessage):
-        async with message.process():  # auto ack after block if no exception
-            try:
-                raw_message = message.body
-                filenames = self.convertor.byte_to_list_str(raw_message)
+    async def consume_loop(self):
+        try:
+            async for msg in self.consumer:
+                await self.handle_message(msg)
+        except Exception as e:
+            self.logger.error(f"Error in consume loop: {e}")
+        finally:
+            await self.stop()
 
-                self.logger.info(f"Received messages: {filenames}")
+    async def handle_message(self, msg):
+        try:
+            raw_message = msg.value
+            filenames = self.convertor.byte_to_list_str(raw_message)
 
-                files = self.__get_files_from_s3(filenames)
-                summary_files_len = sum(len(f) for f in files)
-                self.logger.info(f"Summary files lengths {summary_files_len}")
+            self.logger.info(f"Received message s: {filenames}")
 
-            except Exception as e:
-                self.logger.error(f"Failed to process message: {e}")
-                # optionally: requeue message
-                await message.nack(requeue=True)
+            files = self.__get_files_from_s3(filenames)
 
+            clustered_texts = self.clusterizer.do(files)
+            print(clustered_texts)
+            tp = TopicPartition(msg.topic, msg.partition)
+            await self.consumer.commit({tp: msg.offset + 1})
+            self.logger.info(f"Offset committed for {filenames}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to process message: {e}")

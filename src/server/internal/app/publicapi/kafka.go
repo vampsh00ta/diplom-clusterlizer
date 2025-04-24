@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func startKafkaConsumers(cfg Consumer, log *zap.SugaredLogger) error {
+func startKafkaConsumers(cfg KafkaConsumer, log *zap.SugaredLogger) error {
 
 	documentSaverConsumer := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{cfg.DocumentSaver.URL},

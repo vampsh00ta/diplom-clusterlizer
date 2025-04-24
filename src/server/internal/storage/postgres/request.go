@@ -3,8 +3,11 @@ package postgresrep
 import (
 	"clusterlizer/internal/entity"
 	"clusterlizer/internal/storage"
+	"clusterlizer/pkg/utils"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -20,12 +23,81 @@ var requestFields = []string{
 }
 
 type request struct {
-	ID     entity.RequestID `db:"id"`
-	Result *[]byte          `db:"result"`
+	ID     uuid.UUID        `db:"id"`
+	Result *json.RawMessage `db:"result"`
 	Status string           `db:"status"`
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+func (s *Storage) GetRequestByIDDone(ctx context.Context, ID entity.RequestID) (entity.Request, error) {
+	client, err := s.db.Client(ctx)
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("client: %w", err)
+	}
+
+	query := sq.Select(
+		requestFields...,
+	).
+		From(tableRequest).
+		Where(sq.Eq{
+			fieldID:     ID,
+			fieldStatus: entity.StatusDone.String(),
+		}).
+		PlaceholderFormat(sq.Dollar)
+
+	q, args, err := query.ToSql()
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("query builder: %w", err)
+	}
+	rows, err := client.Query(ctx, q, args...)
+	if err != nil {
+		return entity.Request{}, pgError(fmt.Errorf("row query: %w", err))
+
+	}
+	defer rows.Close()
+
+	rowModel, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[request])
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("collect rows: %w", err)
+	}
+
+	return requestToEntity(rowModel)
+}
+
+func (s *Storage) GetRequestByID(ctx context.Context, ID entity.RequestID) (entity.Request, error) {
+	client, err := s.db.Client(ctx)
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("client: %w", err)
+	}
+
+	query := sq.Select(
+		requestFields...,
+	).
+		From(tableRequest).
+		Where(sq.Eq{
+			fieldID: ID,
+		}).
+		PlaceholderFormat(sq.Dollar)
+	fmt.Println(ID)
+	q, args, err := query.ToSql()
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("query builder: %w", err)
+	}
+	rows, err := client.Query(ctx, q, args...)
+	if err != nil {
+		return entity.Request{}, pgError(fmt.Errorf("row query: %w", err))
+
+	}
+	defer rows.Close()
+
+	rowModel, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[request])
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("collect rows: %w", err)
+	}
+
+	return requestToEntity(rowModel)
 }
 
 func (s *Storage) GetAllRequests(ctx context.Context) ([]entity.Request, error) {
@@ -56,7 +128,7 @@ func (s *Storage) GetAllRequests(ctx context.Context) ([]entity.Request, error) 
 		return nil, fmt.Errorf("collect rows: %w", err)
 	}
 
-	return requestToEntity(rowModels), nil
+	return requestToEntities(rowModels)
 }
 
 func (s *Storage) CreateRequest(ctx context.Context, params storage.CreateRequestParams) (entity.Request, error) {
@@ -86,7 +158,7 @@ func (s *Storage) CreateRequest(ctx context.Context, params storage.CreateReques
 		return entity.Request{}, fmt.Errorf("collect rows: %w", err)
 	}
 
-	return requestToEntity([]request{rowModel})[0], nil
+	return requestToEntity(rowModel)
 }
 
 func (s *Storage) UpdateRequest(ctx context.Context, params storage.UpdateRequestParams) (entity.Request, error) {
@@ -102,6 +174,7 @@ func (s *Storage) UpdateRequest(ctx context.Context, params storage.UpdateReques
 		Where(sq.Eq{
 			fieldID: params.ID,
 		}).
+		Suffix("RETURNING *").
 		PlaceholderFormat(sq.Dollar)
 	query = patchQueryOptional(query, fieldResult, params.Result)
 	query = patchQueryOptional(query, fieldStatus, params.Status)
@@ -110,25 +183,49 @@ func (s *Storage) UpdateRequest(ctx context.Context, params storage.UpdateReques
 	if err != nil {
 		return entity.Request{}, fmt.Errorf("query builder: %w", err)
 	}
-
-	var req request
-	if err := client.QueryRow(ctx, q, args...).Scan(&req); err != nil {
+	row, err := client.Query(ctx, q, args...)
+	if err != nil {
 		return entity.Request{}, pgError(fmt.Errorf("row query: %w", err))
 	}
+	defer row.Close()
 
-	return requestToEntity([]request{req})[0], nil
+	rowModel, err := pgx.CollectOneRow(row, pgx.RowToStructByName[request])
+	if err != nil {
+		return entity.Request{}, fmt.Errorf("collect rows: %w", err)
+	}
+	return requestToEntity(rowModel)
 }
 
-func requestToEntity(requests []request) []entity.Request {
+func requestToEntity(r request) (entity.Request, error) {
+	var result entity.Groups
+
+	if err := json.Unmarshal(utils.SafeNil(r.Result), &result); err != nil {
+		return entity.Request{}, nil
+	}
+	return entity.Request{
+		ID:        entity.RequestID(r.ID.String()),
+		Result:    result,
+		Status:    entity.StatusFromString(r.Status),
+		CreatedAt: r.CreatedAt,
+		UpdatedAt: r.UpdatedAt,
+	}, nil
+}
+
+func requestToEntities(requests []request) ([]entity.Request, error) {
 	res := make([]entity.Request, 0, len(requests))
 	for _, r := range requests {
+		var result entity.Groups
+
+		if err := json.Unmarshal(utils.SafeNil(r.Result), &result); err != nil {
+			return nil, nil
+		}
 		res = append(res, entity.Request{
-			ID:        r.ID,
-			Result:    r.Result,
+			ID:        entity.RequestID(r.ID.String()),
+			Result:    result,
 			Status:    entity.StatusFromString(r.Status),
 			CreatedAt: r.CreatedAt,
 			UpdatedAt: r.UpdatedAt,
 		})
 	}
-	return res
+	return res, nil
 }

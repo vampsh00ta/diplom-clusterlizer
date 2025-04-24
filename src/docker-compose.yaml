@@ -88,6 +88,18 @@ services:
         interval: 10s
         timeout: 5s
         retries: 10
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # порт для AMQP (RabbitMQ протокол)
+      - "15672:15672"   # порт для веб-интерфейса (RabbitMQ Management UI)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
   migrate:
     image: migrate/migrate
     container_name: db_migrations
@@ -110,3 +122,4 @@ networks:
 
 volumes:
   postgres_data:
+  rabbitmq_data:

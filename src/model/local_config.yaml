@@ -1,8 +1,16 @@
 kafka:
-  bootstrap_servers: "kafka:9093"
+  bootstrap_servers: "kafka:9092"
   topic: "document_sender"
   group_id: "document_sender-group-a"
   max_poll_interval_ms: 300000
+rabbitmq:
+  url: amqp://guest:guest@localhost:5672/
+  consumer:
+    queue_name: document_sender
+    exchange: ""
+  producer:
+    queue_name: document_saver
+    exchange: ""
 
 s3:
   bucket: "diplom.clusterization"

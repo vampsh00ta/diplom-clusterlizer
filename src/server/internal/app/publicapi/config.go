@@ -13,11 +13,12 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App   App   `yaml:"app"`
-		PG    PG    `yaml:"postgres"`
-		Front Front `yaml:"front"`
-		Kafka Kafka `yaml:"kafka"`
-		S3    S3    `yaml:"s3"`
+		App      App      `yaml:"app"`
+		PG       PG       `yaml:"postgres"`
+		Front    Front    `yaml:"front"`
+		Kafka    Kafka    `yaml:"kafka"`
+		RabbitMQ RabbitMQ `yaml:"rabbitmq"`
+		S3       S3       `yaml:"s3"`
 	}
 
 	App struct {
@@ -49,13 +50,13 @@ type (
 
 type (
 	Kafka struct {
-		Producer Producer `yaml:"producer"`
-		Consumer Consumer `yaml:"consumer"`
+		Producer KafkaProducer `yaml:"producer"`
+		Consumer KafkaConsumer `yaml:"consumer"`
 	}
-	Producer struct {
+	KafkaProducer struct {
 		DocumentNameSender KafkaBase `yaml:"document_name_sender"`
 	}
-	Consumer struct {
+	KafkaConsumer struct {
 		DocumentSaver KafkaBase `yaml:"document_saver"`
 	}
 
@@ -65,6 +66,23 @@ type (
 		MaxBytes  int    ` yaml:"max_bytes"`
 		Partition int    `yaml:"partition"`
 		Group     string `yaml:"group"`
+	}
+
+	RabbitMQ struct {
+		Producer RabbitMQProducer `yaml:"producer"`
+		Consumer RabbitMQConsumer `yaml:"consumer"`
+	}
+	RabbitMQProducer struct {
+		DocumentNameSender RabbitMQBase `yaml:"document_name_sender"`
+	}
+	RabbitMQConsumer struct {
+		DocumentSaver RabbitMQBase `yaml:"document_saver"`
+	}
+
+	RabbitMQBase struct {
+		URL       string ` yaml:"url"`
+		QueueName string `yaml:"queue_name"`
+		Exchange  string `yaml:"exchange"`
 	}
 )
 

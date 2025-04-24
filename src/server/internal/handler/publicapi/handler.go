@@ -7,6 +7,7 @@ import (
 	requestsrvc "clusterlizer/internal/service/request"
 	s3 "clusterlizer/internal/service/s3"
 	"strconv"
+	"time"
 
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -36,6 +37,11 @@ func New(
 	}
 }
 
+type uploadFilesRequest struct {
+	GroupCount int
+	Files      [][]byte
+}
+
 type uploadFilesResponse struct {
 	UUID uuid.UUID `json:"uuid"`
 }
@@ -44,9 +50,8 @@ type uploadFilesResponse struct {
 func (h *Handler) UploadFiles(ctx *fiber.Ctx) error {
 	id := uuid.New()
 
-	files, err := h.getFiles(ctx)
+	req, err := h.getUploadFilesFromForm(ctx)
 	if err != nil {
-		h.log.Error(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
 			Error: err.Error(),
 		})
@@ -61,8 +66,8 @@ func (h *Handler) UploadFiles(ctx *fiber.Ctx) error {
 			Error: err.Error(),
 		})
 	}
-	fileNames := make([]string, 0, len(files))
-	for i, file := range files {
+	fileNames := make([]string, 0, len(req.Files))
+	for i, file := range req.Files {
 		fileKey := fmt.Sprintf("%s_%s", id.String(), strconv.Itoa(i))
 		fileNames = append(fileNames, fileKey)
 		if err := h.s3Srvc.Upload(ctx.Context(), fileKey, file); err != nil {
@@ -74,7 +79,10 @@ func (h *Handler) UploadFiles(ctx *fiber.Ctx) error {
 		}
 	}
 
-	if err := h.documentSrvc.SendDocumentNames(ctx.Context(), fileNames); err != nil {
+	if err := h.documentSrvc.SendDocumentNames(ctx.Context(), documentsrvc.SendDocumentParams{
+		GroupCount: req.GroupCount,
+		Keys:       fileNames,
+	}); err != nil {
 		h.log.Error(err)
 
 		return ctx.Status(fiber.StatusInternalServerError).JSON(errResponse{
@@ -86,46 +94,65 @@ func (h *Handler) UploadFiles(ctx *fiber.Ctx) error {
 }
 
 type getClusterizationsRequest struct {
-	UUID uuid.UUID `json:"uuid"`
+	ID uuid.UUID `json:"id"`
 }
 type getClusterizationsResponse struct {
-	UUID uuid.UUID `json:"uuid"`
+	ID        string        `json:"id"`
+	Result    entity.Groups `json:"result"`
+	Status    string        `json:"status"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 func (h *Handler) GetClusterizations(ctx *fiber.Ctx) error {
 	var req getClusterizationsRequest
-	_ = req
-	if err := ctx.QueryParser(&req); err != nil {
+	//source := ctx.Params("*")
+	idParam := ctx.Params("id") // берём :id из URL
+
+	// Пытаемся парсить в UUID
+	ID, err := uuid.Parse(idParam)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid UUID",
+		})
+	}
+	fmt.Println(ID)
+	fmt.Println(req.ID, "asd")
+	res, err := h.requestSrvc.GetRequestByIDDone(ctx.Context(), entity.RequestID(ID.String()))
+	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
 			Error: err.Error(),
 		})
 	}
-	_ = req
-
-	res := getClusterizationsResponse{UUID: req.UUID}
-	return ctx.Status(fiber.StatusCreated).JSON(res)
+	return ctx.Status(fiber.StatusCreated).JSON(getClusterizationsResponse{
+		ID:        res.ID.String(),
+		Result:    res.Result,
+		Status:    res.Status.String(),
+		UpdatedAt: res.UpdatedAt,
+		CreatedAt: res.CreatedAt,
+	})
 }
 
-type GetCurrentQueueRequest struct {
-	UUID uuid.UUID `json:"uuid"`
-}
-type GetCurrentQueueResponse struct {
-	Number int `json:"number"`
-}
-
-func (h *Handler) GetCurrentQueue(ctx *fiber.Ctx) error {
-	var req getClusterizationsRequest
-	_ = req
-	if err := ctx.QueryParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
-			Error: err.Error(),
-		})
-	}
-	_ = req
-
-	res := getClusterizationsResponse{}
-	return ctx.Status(fiber.StatusCreated).JSON(res)
-}
+//type GetCurrentQueueRequest struct {
+//	UUID uuid.UUID `json:"uuid"`
+//}
+//type GetCurrentQueueResponse struct {
+//	Number int `json:"number"`
+//}
+//
+//func (h *Handler) GetCurrentQueue(ctx *fiber.Ctx) error {
+//	var req getClusterizationsRequest
+//	_ = req
+//	if err := ctx.QueryParser(&req); err != nil {
+//		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
+//			Error: err.Error(),
+//		})
+//	}
+//	_ = req
+//
+//	res := getClusterizationsResponse{}
+//	return ctx.Status(fiber.StatusCreated).JSON(res)
+//}
 
 func fileFormToBytes(fileHeader *multipart.FileHeader) ([]byte, error) {
 	file, err := fileHeader.Open()
@@ -142,29 +169,58 @@ func fileFormToBytes(fileHeader *multipart.FileHeader) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (h *Handler) getFiles(ctx *fiber.Ctx) ([][]byte, error) {
+func (h *Handler) getUploadFilesFromForm(ctx *fiber.Ctx) (uploadFilesRequest, error) {
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		h.log.Error(err)
-		return nil, fmt.Errorf(errReadForm)
+
+		return uploadFilesRequest{}, fmt.Errorf(errReadForm)
 	}
 
 	filesForm := form.File["file"]
 	if len(filesForm) == 0 {
-		return nil, fmt.Errorf(errNoFiles)
+		h.log.Error(fmt.Errorf(errNoFiles))
+
+		return uploadFilesRequest{}, fmt.Errorf(errNoFiles)
 	}
 	files := make([][]byte, 0, len(filesForm))
 	for _, fileForm := range filesForm {
 		fileBytes, err := fileFormToBytes(fileForm)
 		if err != nil {
-			return nil, fmt.Errorf("file form to bytes: %w", err)
+			h.log.Error(fmt.Errorf("file form to bytes: %w", err))
+
+			return uploadFilesRequest{}, fmt.Errorf("file form to bytes: %w", err)
 		}
 		if !correctFileFormat(fileForm.Filename) {
 			h.log.Error(fmt.Errorf("%s; file name:%s", errNowAllowedFileFormat, fileForm.Filename))
 
-			return nil, fmt.Errorf(errNowAllowedFileFormat)
+			return uploadFilesRequest{}, fmt.Errorf(errNowAllowedFileFormat)
 		}
 		files = append(files, fileBytes)
 	}
-	return files, nil
+	groupCountForm := form.Value["group_count"]
+	if len(groupCountForm) != 1 {
+		h.log.Error(fmt.Errorf(errSeveralGroupCountForms))
+
+		return uploadFilesRequest{}, fmt.Errorf(errSeveralGroupCountForms)
+	}
+	groupCountStr := groupCountForm[0]
+	fmt.Println(groupCountStr)
+	groupCount, err := strconv.Atoi(groupCountStr)
+	if err != nil {
+		h.log.Error(err)
+
+		return uploadFilesRequest{}, err
+	}
+
+	if len(files) < groupCount {
+		h.log.Error(fmt.Errorf(errLessFilesThanGroupCount))
+
+		return uploadFilesRequest{}, fmt.Errorf(errLessFilesThanGroupCount)
+	}
+
+	return uploadFilesRequest{
+		Files:      files,
+		GroupCount: groupCount,
+	}, nil
 }

@@ -3,6 +3,10 @@ import logging
 from io import BytesIO
 import pdfplumber
 from docx import Document
+
+from internal.consumer.entity import Request
+
+
 class Converter:
     def __init__(self,logger:logging.Logger):
         self.logger = logger
@@ -39,5 +43,13 @@ class Converter:
                 raise ValueError("Unexpected message format")
         except Exception as e:
             return []
+
+    def parse_message(self,raw_message: bytes) -> Request:
+        try:
+            data = json.loads(raw_message.decode("utf-8"))
+            request = Request(**data)
+            return request
+        except Exception as e:
+            raise ValueError(f"Failed to parse message: {e}")
 
 

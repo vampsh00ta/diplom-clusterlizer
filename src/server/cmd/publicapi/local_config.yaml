@@ -27,11 +27,14 @@ rabbitmq:
     document_name_sender:
       url: amqp://guest:guest@localhost:5672/
       queue_name: document_sender
+      exchange:
 
   consumer:
     document_saver:
-      url: localhost:9092
+      url: amqp://guest:guest@localhost:5672/
       queue_name: document_saver
+      exchange:
+
 
 postgres:
   pool_max: 10

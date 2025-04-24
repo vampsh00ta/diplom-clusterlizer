@@ -27,10 +27,10 @@ type KafkaImpl struct {
 	log      *zap.SugaredLogger
 }
 
-func (s *KafkaImpl) SendDocumentNames(ctx context.Context, names []string) error {
+func (s *KafkaImpl) SendDocumentNames(ctx context.Context, params SendDocumentParams) error {
 	s.log.Info("send to broker")
 
-	dataBytes, err := json.Marshal(names)
+	dataBytes, err := json.Marshal(params.Keys)
 	if err != nil {
 		s.log.Errorf("send document marshal: %w", err)
 

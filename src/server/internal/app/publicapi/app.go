@@ -1,17 +1,17 @@
 package publicapi
 
 import (
+	rabbitmqconsumer "clusterlizer/internal/handler/rabbitmq"
 	documentsrvc "clusterlizer/internal/service/document"
 	requestsrvc "clusterlizer/internal/service/request"
+
 	s3srvc "clusterlizer/internal/service/s3"
 	psqlrep "clusterlizer/internal/storage/postgres"
 	"clusterlizer/pkg/pgxclient"
 	s3client "clusterlizer/pkg/s3"
-
 	"context"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/segmentio/kafka-go"
-
+	rabbitmq "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
@@ -42,24 +42,39 @@ func Run(cfg *Config) {
 			Password: cfg.PG.Password,
 			Host:     cfg.PG.Host,
 		})
-	////S3 client
-	s3Session := s3.NewFromConfig(cfg.S3.Config)
-	s3Client := s3client.NewClient(s3Session, cfg.S3.Bucket)
-
-	// Kafka Producer
-	documentSenderProducer := &kafka.Writer{
-		Addr:                   kafka.TCP(cfg.Kafka.Producer.DocumentNameSender.URL),
-		Topic:                  cfg.Kafka.Producer.DocumentNameSender.Topic,
-		RequiredAcks:           kafka.RequireOne,
-		Balancer:               &kafka.LeastBytes{},
-		Async:                  true,
-		AllowAutoTopicCreation: true,
-	}
-
 	if err != nil {
 		logger.Fatal("user - Run - postgres.New: %v", zap.Error(err))
 	}
 	defer pg.Close()
+	////S3 client
+	s3Session := s3.NewFromConfig(cfg.S3.Config)
+	s3Client := s3client.NewClient(s3Session, cfg.S3.Bucket)
+
+	//Kafka KafkaProducer
+	//documentSenderProducer := &kafka.Writer{
+	//	Addr:                   kafka.TCP(cfg.Kafka.Producer.DocumentNameSender.URL),
+	//	Topic:                  cfg.Kafka.Producer.DocumentNameSender.Topic,
+	//	RequiredAcks:           kafka.RequireOne,
+	//	Balancer:               &kafka.LeastBytes{},
+	//	Async:                  true,
+	//	AllowAutoTopicCreation: true,
+	//}
+	conn, err := rabbitmq.Dial(cfg.RabbitMQ.Producer.DocumentNameSender.URL)
+	if err != nil {
+		logger.Fatal("connection dial: %w", err)
+	}
+	ch, err := conn.Channel()
+	if err != nil {
+		logger.Fatal("channel: %w", err)
+	}
+	defer func() {
+		conn.Close()
+		ch.Close()
+	}()
+
+	if err := newRabbitMQProducer(cfg, ch); err != nil {
+		logger.Fatal("rabbitmq producer sender: %w", zap.Error(err))
+	}
 
 	//Storage
 	logger.Info("starting storage...")
@@ -69,8 +84,17 @@ func Run(cfg *Config) {
 	//Services
 	logger.Info("starting services...")
 
-	documentImpl := documentsrvc.NewKafka(
-		documentSenderProducer,
+	//documentImpl := documentsrvc.NewKafka(
+	//	documentSenderProducer,
+	//	storage,
+	//	logger,
+	//)
+	documentImpl := documentsrvc.NewRabbiqMQ(
+		documentsrvc.RabbitMQConfig{
+			Exchange: cfg.RabbitMQ.Producer.DocumentNameSender.Exchange,
+			Key:      cfg.RabbitMQ.Producer.DocumentNameSender.QueueName,
+		},
+		ch,
 		storage,
 		logger,
 	)
@@ -82,6 +106,18 @@ func Run(cfg *Config) {
 		logger,
 		s3Client,
 	)
+
+	rabbitmqHandler := rabbitmqconsumer.New(
+		ch,
+		rabbitmqconsumer.Config{
+			Queue: cfg.RabbitMQ.Consumer.DocumentSaver.QueueName,
+		},
+		logger,
+		requestImpl,
+	)
+	if err := rabbitmqHandler.DocumentSaver(); err != nil {
+		logger.Fatal("rabbitmq consumer sender: %w", zap.Error(err))
+	}
 	// HTTP server
 	logger.Info("starting HTTP server...")
 
@@ -90,7 +126,7 @@ func Run(cfg *Config) {
 	// Kafka consumers
 	logger.Info("starting kafka consumer...")
 
-	// if err = startKafkaConsumers(cfg.Kafka.Consumer, logger); err != nil {
+	// if err = startKafkaConsumers(cfg.Kafka.KafkaConsumer, logger); err != nil {
 	// 	logger.Fatal("kafka consumer: %w", zap.Error(err))
 	// }
 
