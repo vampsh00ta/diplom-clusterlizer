@@ -1,6 +1,8 @@
 package pgxclient
 
-import "context"
+import (
+	"context"
+)
 
 type DBManager interface {
 	Client(ctx context.Context) (Client, error)
@@ -24,6 +26,7 @@ func (p pgxManager) Client(ctx context.Context) (Client, error) {
 	if ok {
 		return ctxClient, nil
 	}
+
 	return p.db, nil
 }
 

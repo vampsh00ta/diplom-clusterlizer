@@ -28,7 +28,7 @@ func (p txManager) Create(ctx context.Context) (Tx, context.Context, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("tx error: %w", err)
 	}
-	ctx = p.ctxm.Set(ctx)
+	ctx = p.ctxm.Set(ctx, tx)
 	return tx, ctx, nil
 }
 
@@ -37,6 +37,6 @@ func (p txManager) CreateByKey(ctx context.Context, key interface{}) (Tx, contex
 	if err != nil {
 		return nil, nil, fmt.Errorf("tx error: %w", err)
 	}
-	ctx = p.ctxm.SetByKey(ctx, key)
+	ctx = p.ctxm.SetByKey(ctx, key, tx)
 	return tx, ctx, nil
 }

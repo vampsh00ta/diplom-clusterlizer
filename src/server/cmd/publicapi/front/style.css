@@ -1,0 +1,46 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+h1 {
+    text-align: center;
+}
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+input[type="file"] {
+    padding: 6px;
+}
+input[type="number"] {
+    width: 100px;
+    padding: 6px;
+}
+button {
+    padding: 10px;
+    border: none;
+    background-color: #007BFF;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+#status {
+    margin-top: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+#new-request {
+    display: none;
+    margin-top: 10px;
+    background-color: #28A745;
+}
