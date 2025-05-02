@@ -27,6 +27,10 @@ func (s *Storage) Tx() pgxclient.Manager {
 	return s
 }
 
+func (s *Storage) File() storage.File {
+	return s
+}
+
 func pgError(err error) error {
 	return err
 }

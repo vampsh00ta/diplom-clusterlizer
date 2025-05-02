@@ -3,6 +3,7 @@ package publicapi
 import (
 	rabbitmqconsumer "clusterlizer/internal/handler/rabbitmq"
 	documentsrvc "clusterlizer/internal/service/document"
+	filesrvc "clusterlizer/internal/service/file"
 	requestsrvc "clusterlizer/internal/service/request"
 
 	s3srvc "clusterlizer/internal/service/s3"
@@ -107,6 +108,11 @@ func Run(cfg *Config) {
 		s3Client,
 	)
 
+	fileImpl := filesrvc.New(
+		storage,
+		logger,
+	)
+
 	rabbitmqHandler := rabbitmqconsumer.New(
 		ch,
 		rabbitmqconsumer.Config{
@@ -121,7 +127,12 @@ func Run(cfg *Config) {
 	// HTTP server
 	logger.Info("starting HTTP server...")
 
-	app := registerHTPP(cfg, logger, documentImpl, requestImpl, s3Impl)
+	app := registerHTPP(cfg, logger,
+		documentImpl,
+		requestImpl,
+		s3Impl,
+		fileImpl,
+	)
 
 	// Kafka consumers
 	logger.Info("starting kafka consumer...")
@@ -130,7 +141,7 @@ func Run(cfg *Config) {
 	// 	logger.Fatal("kafka consumer: %w", zap.Error(err))
 	// }
 
-	if err = app.Listen(":" + cfg.App.Port); err != nil {
+	if err = app.Listen(cfg.App.Address); err != nil {
 		logger.Fatal("Ошибка запуска сервера: %v", zap.Error(err))
 	}
 }

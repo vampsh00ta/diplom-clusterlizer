@@ -3,6 +3,7 @@ package publicapi
 import (
 	"clusterlizer/internal/handler/publicapi"
 	documentsrvc "clusterlizer/internal/service/document"
+	filesrvc "clusterlizer/internal/service/file"
 	requestsrvc "clusterlizer/internal/service/request"
 	s3srvc "clusterlizer/internal/service/s3"
 
@@ -23,6 +24,7 @@ func registerHTPP(
 	documentSrvc documentsrvc.Service,
 	requestSrvc requestsrvc.Service,
 	s3Srvc s3srvc.Service,
+	fileSrvc filesrvc.Service,
 	//authMiddleware := keyauth.New(keyauth.Config{
 
 ) *fiber.App {
@@ -33,6 +35,7 @@ func registerHTPP(
 		documentSrvc,
 		requestSrvc,
 		s3Srvc,
+		fileSrvc,
 	)
 	//authMiddleware := keyauth.New(keyauth.Config{
 	//	KeyLookup: "cookie:access_token",
@@ -46,6 +49,8 @@ func registerHTPP(
 
 	publicApiGroup.Post("/uploadFiles", publicApi.UploadFiles)
 	publicApiGroup.Get("/getClusterizations/:id", publicApi.GetClusterizations)
+	publicApiGroup.Get("/downloadFile/:key", publicApi.DownloadFile)
+
 	//publicApiGroup.Get("/getCurrentQueue/:uuid", publicApi.GetCurrentQueue)
 
 	//front
@@ -58,7 +63,7 @@ func newFiber(cfg *Config, logger *zap.SugaredLogger) *fiber.App {
 	app := fiber.New(
 		fiber.Config{
 			AppName:   cfg.App.Name,
-			BodyLimit: 100 * 1024 * 1024, // this is the default limit of 4MB
+			BodyLimit: 100 * 1024 * 1024,
 		})
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger.Desugar(),

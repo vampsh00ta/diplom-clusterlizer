@@ -27,7 +27,7 @@ func (s Status) String() string {
 	case StatusDone:
 		return textStatusDone
 	case StatusError:
-		return UNSPECIFIED_STATUS
+		return textStatusError
 	}
 	return UNSPECIFIED_STATUS
 }

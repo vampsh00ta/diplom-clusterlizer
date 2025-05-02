@@ -1,33 +1,47 @@
 app:
   name: 'clusterlizer'
   version: '1.0.0'
-  port: 8080
+  address: 0.0.0.0:8080
 
 logger:
-  log_level: 'debug'
+  log_level: 'info'
 
 front:
   static: './front'
 
-kafka:
+#kafka:
+#  producer:
+#    document_name_sender:
+#      url: kafka:9092
+#      topic: document_sender
+#      #      max_bytes: 10**20
+#      group: document_sender-group-a
+#  consumer:
+#    document_saver:
+#      url: localhost:9092
+#      topic: document_sender
+#      max_bytes: 10mb
+
+rabbitmq:
   producer:
     document_name_sender:
-      url: kafka:29093
-      topic: document_sender
-      #      max_bytes: 10**20
-      group: document_sender-group-a
+      url: amqp://guest:guest@localhost:5672/
+      queue_name: document_sender
+      exchange:
+
   consumer:
     document_saver:
-      url: kafka:29093
-      topic: document_sender
-#      max_bytes: 10mb
+      url: amqp://guest:guest@localhost:5672/
+      queue_name: document_saver
+      exchange:
+
 
 postgres:
   pool_max: 10
   username: diplom
   db: diplom
   password: diplom
-  host: diplomdb
+  host: localhost
   port: 6432
 
 s3:

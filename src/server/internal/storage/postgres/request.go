@@ -60,7 +60,7 @@ func (s *Storage) GetRequestByIDDone(ctx context.Context, ID entity.RequestID) (
 
 	rowModel, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[request])
 	if err != nil {
-		return entity.Request{}, fmt.Errorf("collect rows: %w", err)
+		return entity.Request{}, storage.DbError(fmt.Errorf("collect rows: %w", err))
 	}
 
 	return requestToEntity(rowModel)
@@ -80,7 +80,7 @@ func (s *Storage) GetRequestByID(ctx context.Context, ID entity.RequestID) (enti
 			fieldID: ID,
 		}).
 		PlaceholderFormat(sq.Dollar)
-	fmt.Println(ID)
+
 	q, args, err := query.ToSql()
 	if err != nil {
 		return entity.Request{}, fmt.Errorf("query builder: %w", err)
@@ -197,11 +197,13 @@ func (s *Storage) UpdateRequest(ctx context.Context, params storage.UpdateReques
 }
 
 func requestToEntity(r request) (entity.Request, error) {
-	var result entity.Groups
-
-	if err := json.Unmarshal(utils.SafeNil(r.Result), &result); err != nil {
-		return entity.Request{}, nil
+	var result entity.GraphData
+	if r.Result != nil {
+		if err := json.Unmarshal(utils.SafeNil(r.Result), &result); err != nil {
+			return entity.Request{}, err
+		}
 	}
+
 	return entity.Request{
 		ID:        entity.RequestID(r.ID.String()),
 		Result:    result,
@@ -214,10 +216,12 @@ func requestToEntity(r request) (entity.Request, error) {
 func requestToEntities(requests []request) ([]entity.Request, error) {
 	res := make([]entity.Request, 0, len(requests))
 	for _, r := range requests {
-		var result entity.Groups
+		var result entity.GraphData
 
-		if err := json.Unmarshal(utils.SafeNil(r.Result), &result); err != nil {
-			return nil, nil
+		if r.Result != nil {
+			if err := json.Unmarshal(utils.SafeNil(r.Result), &result); err != nil {
+				return nil, err
+			}
 		}
 		res = append(res, entity.Request{
 			ID:        entity.RequestID(r.ID.String()),

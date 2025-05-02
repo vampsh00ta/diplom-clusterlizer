@@ -7,7 +7,8 @@ import boto3
 from aiokafka import AIOKafkaConsumer, TopicPartition
 from internal.config.config import AppConfig
 from internal.converter.converter import Converter
-from internal.model.сlusterizer import Clusterizer
+from internal.сlusterizer.group_builder import Groupbuilder
+from internal.entity.document import Document as DocumentEntity
 
 # from internal.model.model import MLModel
 
@@ -22,7 +23,7 @@ class KafkaServer:
              consumer: AIOKafkaConsumer,
              s3_client,
             convertor:Converter,
-                 clusterizer:Clusterizer
+                 clusterizer:Groupbuilder
                  ):
         self.config = config
         self.consumer = consumer
@@ -42,8 +43,8 @@ class KafkaServer:
             await self.consumer.stop()
             self.logger.info("Kafka consumer stopped")
 
-    def __get_files_from_s3(self, filenames: List[str]) -> Dict[str, str]:
-        res:Dict[str, str] = defaultdict()
+    def __get_files_from_s3(self, filenames: List[str]) -> Dict[str, DocumentEntity]:
+        res:Dict[str, DocumentEntity] = defaultdict()
         for filename in filenames:
             self.logger.info(f"Fetching {filename} from S3...")
 

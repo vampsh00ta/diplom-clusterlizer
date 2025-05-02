@@ -9,6 +9,7 @@ import (
 type Storage interface {
 	DoInTransaction(ctx context.Context, f pgxclient.TxFunc) error
 	Request() Request
+	File() File
 }
 
 type Request interface {
@@ -16,5 +17,9 @@ type Request interface {
 	UpdateRequest(ctx context.Context, params UpdateRequestParams) (entity.Request, error)
 	GetAllRequests(ctx context.Context) ([]entity.Request, error)
 	GetRequestByID(ctx context.Context, ID entity.RequestID) (entity.Request, error)
-	GetRequestByIDDone(ctx context.Context, ID entity.RequestID) (entity.Request, error)
+}
+
+type File interface {
+	CreateFile(ctx context.Context, params CreateFileParams) (entity.File, error)
+	GetFileByKey(ctx context.Context, key string) (entity.File, error)
 }

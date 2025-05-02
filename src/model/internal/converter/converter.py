@@ -4,30 +4,39 @@ from io import BytesIO
 import pdfplumber
 from docx import Document
 
-from internal.consumer.entity import Request
+from internal.entity.request import Request
+from internal.entity.document import Document as DocumentEntity
 
 
 class Converter:
     def __init__(self,logger:logging.Logger):
         self.logger = logger
-    def file_to_str(self, data:bytes)->str:
+    def file_to_str(self, data:bytes)->DocumentEntity:
         self.logger.info(f"convert file to str")
 
         res = None
         if data[:4] == b"%PDF":
             try:
                 with pdfplumber.open(BytesIO(data)) as pdf:
-                    res = "\n".join([
+                    text = "\n".join([
                         page.extract_text() or "" for page in pdf.pages
                     ])
+                    res = DocumentEntity(
+                        text = text,
+                        type = "pdf"
+                    )
             except Exception as e:
                 self.logger.error(f"[PDF ERROR] {e}")
         elif data[:2] == b"PK":
             try:
                 doc = Document(BytesIO(data))
-                res =  "\n".join([
+                text =  "\n".join([
                     para.text for para in doc.paragraphs if para.text.strip()
                 ])
+                res = DocumentEntity(
+                    text=text,
+                    type="docx"
+                )
             except Exception as e:
                 self.logger.error(f"[DOCX ERROR] {e}")
         return res

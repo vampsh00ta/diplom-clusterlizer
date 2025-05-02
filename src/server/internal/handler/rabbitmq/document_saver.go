@@ -3,7 +3,6 @@ package rabbitmq
 import (
 	"clusterlizer/internal/entity"
 	requestsrvc "clusterlizer/internal/service/request"
-	"clusterlizer/pkg/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,10 +10,10 @@ import (
 	"log"
 )
 
-type documentSaverParams struct {
-	ID     string         `json:"id"`
-	Groups []entity.Group `json:"groups"`
-}
+//type documentSaverParams struct {
+//	ID     string         `json:"id"`
+//	Groups []entity.Group `json:"groups"`
+//}
 
 func (h Handler) DocumentSaver() error {
 	ctx := context.Background()
@@ -52,15 +51,14 @@ func (h Handler) DocumentSaver() error {
 		for msg := range msgs {
 			log.Printf("Received a message: %s", msg.MessageId)
 
-			bytes, ID, err := h.decodeDocumentSaverMsg(msg.Body)
+			input, err := h.decodeDocumentSaverMsg(msg.Body)
 			if err != nil {
 				errorChan <- err
 				continue
 			}
-			_, err = h.requestSrvc.UpdateRequest(ctx, requestsrvc.UpdateRequestParams{
-				ID:     entity.RequestID(ID),
-				Result: utils.NewOptional(&bytes),
-				Status: utils.NewOptional(entity.StatusDone),
+			err = h.requestSrvc.SaveResult(ctx, requestsrvc.SaveResultParams{
+				ID:    entity.RequestID(input.ID),
+				Graph: input.Graph,
 			})
 			if err != nil {
 				errorChan <- err
@@ -71,22 +69,15 @@ func (h Handler) DocumentSaver() error {
 
 	return nil
 }
-func (h Handler) decodeDocumentSaverMsg(b []byte) ([]byte, string, error) {
-	var input documentSaverParams
+func (h Handler) decodeDocumentSaverMsg(b []byte) (entity.DocumentSaverReq, error) {
+	var input entity.DocumentSaverReq
 	if err := json.Unmarshal(b, &input); err != nil {
-		return nil, "", err
+		return entity.DocumentSaverReq{}, err
 	}
+
 	if input.ID == "" {
-		return nil, "", fmt.Errorf("nil id")
+		return entity.DocumentSaverReq{}, fmt.Errorf("nil id")
 	}
-	var res entity.Groups
-	res = input.Groups
-
-	bytes, err := json.Marshal(res)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return bytes, input.ID, nil
+	return input, nil
 
 }

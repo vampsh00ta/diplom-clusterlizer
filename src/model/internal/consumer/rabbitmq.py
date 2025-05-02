@@ -1,9 +1,18 @@
 import json
 
+import networkx as nx
+
 from internal.config.config import AppConfig
 from internal.converter.converter import Converter
-from internal.model.сlusterizer import Clusterizer
-from internal.consumer.entity import ClusterizationRes
+from internal.entity.request import Request
+from internal.entity.response import GraphRes,ClusterizationRes
+from internal.entity.graph import GraphData,Link,Node
+from internal.entity.document import Document as DocumentEntity
+
+
+from internal.сlusterizer.group_builder import Groupbuilder
+from internal.сlusterizer.graph_builder import ClusterGraphBuilder
+
 
 import aio_pika
 from aio_pika import IncomingMessage, Message, ExchangeType
@@ -19,7 +28,8 @@ class RabbitMQServer:
         logger: logging.Logger,
         s3_client,
         convertor: Converter,
-        clusterizer: Clusterizer,
+        clusterizer: Groupbuilder,
+            graphbuilder:ClusterGraphBuilder
     ):
         self.exchange = None
         self.queue = None
@@ -30,6 +40,7 @@ class RabbitMQServer:
         self.s3_client = s3_client
         self.convertor = convertor
         self.clusterizer = clusterizer
+        self.graphbuilder = graphbuilder
     
 
     async def start(self):
@@ -39,12 +50,7 @@ class RabbitMQServer:
             self.config.rabbitmq.consumer.queue_name,
             durable=True
         )
-        # Declare exchange for publishing (optional: use default if none specified)
-        # self.exchange = await self.channel.declare_exchange(
-        #     self.config.rabbitmq.producer.exchange,
-        #     ExchangeType.DIRECT,
-        #     durable=True
-        # )
+      
         self.logger.info("RabbitMQ consumer started")
         await self.queue.consume(self.handle_message)
 
@@ -53,8 +59,8 @@ class RabbitMQServer:
             await self.connection.close()
             self.logger.info("RabbitMQ consumer stopped")
 
-    def __get_files_from_s3(self, filenames: List[str]) -> Dict[str, str]:
-        res: Dict[str, str] = defaultdict()
+    def __get_files_from_s3(self, filenames: List[str]) -> Dict[str, DocumentEntity]:
+        res: Dict[str, DocumentEntity] = defaultdict()
         for filename in filenames:
             self.logger.info(f"Fetching {filename} from S3...")
 
@@ -80,12 +86,16 @@ class RabbitMQServer:
 
             self.logger.info(f"Received messages: {req.keys}")
 
-            files = self.__get_files_from_s3(req.keys)
+            id_texts = self.__get_files_from_s3(req.keys)
 
-            clustered_texts = self.clusterizer.do(files,group_count = req.group_count)
+            # clustered_texts = self.clusterizer.do(id_texts,group_count = req.group_count)
+            clustered_texts = self.graphbuilder.build_cluster_graph(id_texts)
+
+            id = req.keys[0].split("_")[0]
+            res = self.__make_res(id,clustered_texts)
             await self.send_message(
                 self.config.rabbitmq.producer.queue_name,
-                clustered_texts)
+                res)
 
             self.logger.info(f"Message processed and clustered successfully for: {req}")
             await message.ack()
@@ -94,9 +104,10 @@ class RabbitMQServer:
             self.logger.error(f"Failed to process message: {e}")
             await message.nack(requeue=True)
 
-    async def send_message(self, routing_key: str, data: ClusterizationRes):
+    async def send_message(self, routing_key: str, data: GraphRes):
         try:
             body = data.json().encode()
+            print(body)
             message = Message(body)
             await self.channel.default_exchange.publish(
                 message,
@@ -106,4 +117,34 @@ class RabbitMQServer:
         except Exception as e:
             self.logger.error(f"Failed to publish message: {e}")
 
+    def __make_res(self,graph_id: str, graph: nx.Graph) -> GraphRes:
+        nodes = []
+        links = []
+
+        for node_id, attr in graph.nodes(data=True):
+            node = Node(
+                id=node_id,
+                title=attr.get("title", ""),
+                cluster=attr.get("cluster", -1),
+                type = attr.get("type", -1)
+            )
+            nodes.append(node)
+
+        for source, target, attr in graph.edges(data=True):
+            link = Link(
+                source=source,
+                target=target,
+                weight=attr.get("weight", 1.0)
+            )
+            links.append(link)
+
+        graph_data = GraphData(
+            directed=nx.is_directed(graph),
+            multigraph=graph.is_multigraph(),
+            graph={},
+            nodes=nodes,
+            links=links
+        )
+
+        return GraphRes(id=graph_id, graph=graph_data)
 

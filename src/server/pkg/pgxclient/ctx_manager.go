@@ -5,8 +5,8 @@ import "context"
 type CtxTrKey struct{}
 
 type CtxManager interface {
-	Set(ctx context.Context, tr interface{}) context.Context
-	SetByKey(ctx context.Context, key interface{}, tr interface{}) context.Context
+	Set(ctx context.Context, tr Client) context.Context
+	SetByKey(ctx context.Context, key interface{}, tr Client) context.Context
 	Get(ctx context.Context) interface{}
 	GetByKey(ctx context.Context, key interface{}) interface{}
 }
@@ -20,11 +20,11 @@ func NewCtxManager(dataType interface{}) CtxManager {
 		//dataType: dataType,
 	}
 }
-func (m ctxManager) SetByKey(ctx context.Context, key interface{}, tr interface{}) context.Context {
+func (m ctxManager) SetByKey(ctx context.Context, key interface{}, tr Client) context.Context {
 	ctx = context.WithValue(ctx, key, tr)
 	return ctx
 }
-func (m ctxManager) Set(ctx context.Context, tr interface{}) context.Context {
+func (m ctxManager) Set(ctx context.Context, tr Client) context.Context {
 	ctx = context.WithValue(ctx, CtxTrKey{}, tr)
 	return ctx
 }

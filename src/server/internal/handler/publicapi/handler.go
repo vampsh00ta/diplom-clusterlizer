@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"clusterlizer/internal/entity"
 	documentsrvc "clusterlizer/internal/service/document"
+	filesrvc "clusterlizer/internal/service/file"
 	requestsrvc "clusterlizer/internal/service/request"
+
 	s3 "clusterlizer/internal/service/s3"
 	"strconv"
 	"time"
@@ -21,6 +23,7 @@ type Handler struct {
 	documentSrvc documentsrvc.Service
 	requestSrvc  requestsrvc.Service
 	s3Srvc       s3.Service
+	fileSrvc     filesrvc.Service
 }
 
 func New(
@@ -28,12 +31,15 @@ func New(
 	documentSrvc documentsrvc.Service,
 	requestSrvc requestsrvc.Service,
 	s3Srvc s3.Service,
+	fileSrvc filesrvc.Service,
+
 ) *Handler {
 	return &Handler{
 		log:          log,
 		documentSrvc: documentSrvc,
 		requestSrvc:  requestSrvc,
 		s3Srvc:       s3Srvc,
+		fileSrvc:     fileSrvc,
 	}
 }
 
@@ -93,33 +99,29 @@ func (h *Handler) UploadFiles(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(res)
 }
 
-type getClusterizationsRequest struct {
-	ID uuid.UUID `json:"id"`
-}
 type getClusterizationsResponse struct {
-	ID        string        `json:"id"`
-	Result    entity.Groups `json:"result"`
-	Status    string        `json:"status"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	ID        string           `json:"id"`
+	Result    entity.GraphData `json:"result"`
+	Status    string           `json:"status"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
 }
 
 func (h *Handler) GetClusterizations(ctx *fiber.Ctx) error {
-	var req getClusterizationsRequest
-	//source := ctx.Params("*")
-	idParam := ctx.Params("id") // берём :id из URL
+	idParam := ctx.Params("id")
 
-	// Пытаемся парсить в UUID
 	ID, err := uuid.Parse(idParam)
 	if err != nil {
+		h.log.Error(err)
+
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid UUID",
 		})
 	}
-	fmt.Println(ID)
-	fmt.Println(req.ID, "asd")
 	res, err := h.requestSrvc.GetRequestByIDDone(ctx.Context(), entity.RequestID(ID.String()))
 	if err != nil {
+		h.log.Error(err)
+		err = handleError(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
 			Error: err.Error(),
 		})
@@ -133,26 +135,35 @@ func (h *Handler) GetClusterizations(ctx *fiber.Ctx) error {
 	})
 }
 
-//type GetCurrentQueueRequest struct {
-//	UUID uuid.UUID `json:"uuid"`
-//}
-//type GetCurrentQueueResponse struct {
-//	Number int `json:"number"`
-//}
-//
-//func (h *Handler) GetCurrentQueue(ctx *fiber.Ctx) error {
-//	var req getClusterizationsRequest
-//	_ = req
-//	if err := ctx.QueryParser(&req); err != nil {
-//		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
-//			Error: err.Error(),
-//		})
-//	}
-//	_ = req
-//
-//	res := getClusterizationsResponse{}
-//	return ctx.Status(fiber.StatusCreated).JSON(res)
-//}
+type downloadFileRequest struct {
+	Key uuid.UUID `json:"key"`
+}
+
+func (h *Handler) DownloadFile(ctx *fiber.Ctx) error {
+	key := ctx.Params("key")
+
+	file, err := h.fileSrvc.GetRequestByKey(ctx.Context(), key)
+	if err != nil {
+		h.log.Error(err)
+
+		err = handleError(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
+			Error: err.Error(),
+		})
+	}
+	fullFileName := fmt.Sprintf("%s.%s", file.Title, file.Type.String())
+	fileBytes, err := h.s3Srvc.Download(ctx.Context(), key)
+	if err != nil {
+		h.log.Error(err)
+
+		err = handleError(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(errResponse{
+			Error: err.Error(),
+		})
+	}
+	ctx.Attachment(fullFileName)
+	return ctx.Send(fileBytes)
+}
 
 func fileFormToBytes(fileHeader *multipart.FileHeader) ([]byte, error) {
 	file, err := fileHeader.Open()
@@ -205,7 +216,6 @@ func (h *Handler) getUploadFilesFromForm(ctx *fiber.Ctx) (uploadFilesRequest, er
 		return uploadFilesRequest{}, fmt.Errorf(errSeveralGroupCountForms)
 	}
 	groupCountStr := groupCountForm[0]
-	fmt.Println(groupCountStr)
 	groupCount, err := strconv.Atoi(groupCountStr)
 	if err != nil {
 		h.log.Error(err)

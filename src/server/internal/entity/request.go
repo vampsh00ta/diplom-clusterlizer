@@ -8,11 +8,9 @@ func (r RequestID) String() string {
 	return string(r)
 }
 
-type Groups []Group
-
 type Request struct {
 	ID        RequestID
-	Result    Groups
+	Result    GraphData
 	Status    Status
 	CreatedAt time.Time
 	UpdatedAt time.Time

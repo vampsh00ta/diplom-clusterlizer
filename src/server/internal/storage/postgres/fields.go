@@ -7,8 +7,12 @@ const (
 	fieldUpdatedAt = "updated_at"
 	fieldData      = "data"
 	fieldResult    = "result"
+	fieldKey       = "key"
+	fieldType      = "type"
+	fileTitle      = "title"
 )
 
 const (
 	tableRequest = "request"
+	tableFile    = "file"
 )

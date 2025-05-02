@@ -22,7 +22,7 @@ class S3(BaseModel):
 
 class AppConfig(BaseModel):
     rabbitmq: RabbiqMQ
-    kafka: Kafka
+    # kafka: Kafka
     s3: S3
 
 def load_config(path: str = "config/config.yaml") -> AppConfig:

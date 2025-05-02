@@ -11,6 +11,7 @@ import (
 type Service interface {
 	Upload(ctx context.Context, key string, fileBytes []byte) error
 	UploadMultiple(ctx context.Context, key string, fileBytes [][]byte) error
+	Download(ctx context.Context, key string) ([]byte, error)
 }
 
 type ServiceImpl struct {
@@ -33,6 +34,12 @@ func (s *ServiceImpl) Upload(ctx context.Context, key string, fileBytes []byte) 
 	s.log.Infof("upload key: %s", key)
 
 	return s.client.Upload(ctx, key, fileBytes)
+}
+
+func (s *ServiceImpl) Download(ctx context.Context, key string) ([]byte, error) {
+	s.log.Infof("upload key: %s", key)
+
+	return s.client.Get(ctx, key)
 }
 
 func (s *ServiceImpl) UploadMultiple(ctx context.Context, key string, fileBytes [][]byte) error {

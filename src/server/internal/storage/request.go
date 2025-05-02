@@ -15,3 +15,9 @@ type UpdateRequestParams struct {
 	Result utils.Optional[*[]byte]       `db:"result"`
 	Status utils.Optional[entity.Status] `db:"status"`
 }
+
+type CreateFileParams struct {
+	Key   string
+	Type  entity.FileType
+	Title string
+}

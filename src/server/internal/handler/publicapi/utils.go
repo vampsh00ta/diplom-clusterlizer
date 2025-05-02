@@ -1,12 +1,8 @@
 package publicapi
 
-import "strings"
-
-var (
-	allowedFileFormats = []string{
-		"pdf",
-		"docx",
-	}
+import (
+	"clusterlizer/internal/entity"
+	"strings"
 )
 
 func correctFileFormat(file string) bool {
@@ -15,7 +11,7 @@ func correctFileFormat(file string) bool {
 		return false
 	}
 	format := splitedFile[len(splitedFile)-1]
-	for _, allowedFormat := range allowedFileFormats {
+	for _, allowedFormat := range entity.AllowedTypes {
 		if allowedFormat == format {
 			return true
 		}

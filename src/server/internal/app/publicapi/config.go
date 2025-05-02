@@ -24,7 +24,7 @@ type (
 	App struct {
 		Name    string `yaml:"name" `
 		Version string `yaml:"version"`
-		Port    string `json:"port"`
+		Address string `json:"address"`
 	}
 
 	Log struct {
