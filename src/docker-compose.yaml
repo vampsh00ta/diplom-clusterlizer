@@ -17,7 +17,7 @@ services:
       - rabbitmq
   model:
     build:
-      context: ./model
+      context: ./clusterizer
       dockerfile: Dockerfile
     container_name: model
     ports:

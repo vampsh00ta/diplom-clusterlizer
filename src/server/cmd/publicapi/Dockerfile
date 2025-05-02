@@ -2,7 +2,7 @@ FROM golang:latest
 WORKDIR /app
 COPY ./go.mod ./go.sum ./
 COPY cmd/publicapi/preprod.yaml .
-#COPY ~/.aws ~/.aws
+COPY ~/.aws ~/.aws
 
 RUN go mod download
 COPY . ./

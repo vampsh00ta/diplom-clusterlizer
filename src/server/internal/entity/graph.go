@@ -16,7 +16,7 @@ type Link struct {
 type GraphData struct {
 	Directed   bool                   `json:"directed"`
 	Multigraph bool                   `json:"multigraph"`
-	Graph      map[string]interface{} `json:"graph"` // Пустой объект или дополнительные поля
+	Graph      map[string]interface{} `json:"graph"`
 	Nodes      []Node                 `json:"nodes"`
 	Links      []Link                 `json:"links"`
 }
