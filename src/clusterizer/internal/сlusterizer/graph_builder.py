@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 from typing import Dict, List, Optional
@@ -10,11 +9,9 @@ import yake
 from networkx.readwrite import json_graph
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-import inspect
 from internal.entity.document import Document as DocumentEntity
+from keybert import KeyBERT
 
-if not hasattr(inspect, 'getargspec'):
-    inspect.getargspec = inspect.getfullargspec
 
 import pymorphy3
 from razdel import tokenize
@@ -45,12 +42,10 @@ class ClusterGraphBuilder:
         sim_threshold: float = 0.75,
         enable_logging: bool = True
     ):
-        # Настройка логирования
         if enable_logging:
             logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
-        # Инициализация моделей
         self.model = SentenceTransformer(embed_model)
         self.yake_extractor = yake.KeywordExtractor(
             lan="ru", n=yake_ngram, top=yake_top
@@ -65,7 +60,9 @@ class ClusterGraphBuilder:
 
         # Подготовка морфологического анализатора
         self.morph = pymorphy3.MorphAnalyzer()
-        self.logger.info("Russian preprocessing is enabled.")
+
+        self.keybert = KeyBERT(keyword_model) if keyword_model else None
+
 
 
 
@@ -73,17 +70,12 @@ class ClusterGraphBuilder:
     def preprocess_text(self, text: str) -> str:
         """
         Очищает, лемматизирует и удаляет стоп-слова из текста.
-        Если отсутствуют razdel или pymorphy2, выполняется базовая очистка.
         """
-        # Нормализация и удаление лишних символов
         text = text.lower()
         text = re.sub(r'https?://\S+|www\.\S+', '', text)
         text = re.sub(r'[^а-яё\s]', ' ', text)
         text = re.sub(r'\s+', ' ', text).strip()
 
-
-
-        # Токенизация и лемматизация
         lemmas = []
         for token in tokenize(text):
             word = token.text
@@ -118,6 +110,7 @@ class ClusterGraphBuilder:
                 self.logger.error("Error generating title for %s: %s", doc_id, e)
                 titles[doc_id] = "Без названия"
         return titles
+
 
     def export_graph_to_json(self, graph: nx.Graph) -> dict:
         """Экспорт графа в JSON node-link формат."""
@@ -190,13 +183,3 @@ class ClusterGraphBuilder:
         return graph
 
 
-# if __name__ == '__main__':
-#     # Пример использования
-#     sample = {
-#         'paper1': "Исследование глубокого обучения в задачах компьютерного зрения.",
-#         'paper2': "Обзор методов кластеризации временных рядов.",
-#         'paper3': "Применение нейронных сетей в анализе текста",
-#     }
-#     builder = ClusterGraphBuilder()
-#     graph = builder.build_cluster_graph(sample)
-#     print(builder.export_graph_to_json(graph))

@@ -3,11 +3,12 @@ package publicapi
 import (
 	"context"
 	"fmt"
+	"path"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	"path"
 )
 
 type (

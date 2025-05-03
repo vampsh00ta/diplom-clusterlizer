@@ -1,14 +1,16 @@
 package postgresrep
 
 import (
-	"clusterlizer/internal/entity"
-	"clusterlizer/internal/storage"
-	"clusterlizer/pkg/utils"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"time"
+
+	"clusterlizer/internal/entity"
+	"clusterlizer/internal/storage"
+	"clusterlizer/pkg/utils"
+
+	"github.com/google/uuid"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
@@ -54,7 +56,6 @@ func (s *Storage) GetRequestByIDDone(ctx context.Context, ID entity.RequestID) (
 	rows, err := client.Query(ctx, q, args...)
 	if err != nil {
 		return entity.Request{}, pgError(fmt.Errorf("row query: %w", err))
-
 	}
 	defer rows.Close()
 
@@ -88,7 +89,6 @@ func (s *Storage) GetRequestByID(ctx context.Context, ID entity.RequestID) (enti
 	rows, err := client.Query(ctx, q, args...)
 	if err != nil {
 		return entity.Request{}, pgError(fmt.Errorf("row query: %w", err))
-
 	}
 	defer rows.Close()
 
@@ -119,7 +119,6 @@ func (s *Storage) GetAllRequests(ctx context.Context) ([]entity.Request, error) 
 	rows, err := client.Query(ctx, q)
 	if err != nil {
 		return nil, pgError(fmt.Errorf("row query: %w", err))
-
 	}
 	defer rows.Close()
 
@@ -143,7 +142,6 @@ func (s *Storage) CreateRequest(ctx context.Context, params storage.CreateReques
 		Suffix("RETURNING *").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
-
 	if err != nil {
 		return entity.Request{}, fmt.Errorf("query builder: %w", err)
 	}

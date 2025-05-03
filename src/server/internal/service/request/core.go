@@ -1,12 +1,13 @@
 package request
 
 import (
-	"clusterlizer/internal/entity"
-	"clusterlizer/internal/storage"
-	"clusterlizer/pkg/utils"
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"clusterlizer/internal/entity"
+	"clusterlizer/internal/storage"
+	"clusterlizer/pkg/utils"
 
 	"go.uber.org/zap"
 )
@@ -22,7 +23,8 @@ type Service interface {
 
 func NewRequest(
 	storage storage.Storage,
-	log *zap.SugaredLogger) *RequestImpl {
+	log *zap.SugaredLogger,
+) *RequestImpl {
 	return &RequestImpl{
 		storage: storage,
 		log:     log,

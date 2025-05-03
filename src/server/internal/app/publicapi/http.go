@@ -25,7 +25,7 @@ func registerHTPP(
 	requestSrvc requestsrvc.Service,
 	s3Srvc s3srvc.Service,
 	fileSrvc filesrvc.Service,
-	//authMiddleware := keyauth.New(keyauth.Config{
+	// authMiddleware := keyauth.New(keyauth.Config{
 
 ) *fiber.App {
 	app := newFiber(cfg, log)
@@ -51,9 +51,9 @@ func registerHTPP(
 	publicApiGroup.Get("/getClusterizations/:id", publicApi.GetClusterizations)
 	publicApiGroup.Get("/downloadFile/:key", publicApi.DownloadFile)
 
-	//publicApiGroup.Get("/getCurrentQueue/:uuid", publicApi.GetCurrentQueue)
+	// publicApiGroup.Get("/getCurrentQueue/:uuid", publicApi.GetCurrentQueue)
 
-	//front
+	// front
 	app.Static("/", cfg.Front.Static)
 
 	return app
@@ -74,7 +74,7 @@ func newFiber(cfg *Config, logger *zap.SugaredLogger) *fiber.App {
 	app.Use(cors.New(cors.Config{
 		AllowHeaders: "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin",
 		AllowOrigins: "*",
-		//AllowCredentials: true,
+		// AllowCredentials: true,
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 	}))
 	return app

@@ -1,11 +1,12 @@
 package pgxclient
 
 import (
-	"clusterlizer/pkg/utils"
 	"context"
 	"fmt"
 	"log"
 	"time"
+
+	"clusterlizer/pkg/utils"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -52,7 +53,6 @@ func New(ctx context.Context, maxAttempts int, config Config) (pool *pgxpool.Poo
 		}
 		return nil
 	}, maxAttempts, 5)
-
 	if err != nil {
 		log.Fatal("error with tries to connect")
 	}

@@ -3,7 +3,8 @@ FROM python:3.13
 WORKDIR /app
 
 COPY requirements.txt .      
-COPY ~/.aws ~/.aws
+# COPY ~/.aws /root/.aws
+
 
 RUN pip install --no-cache-dir -r requirements.txt
 

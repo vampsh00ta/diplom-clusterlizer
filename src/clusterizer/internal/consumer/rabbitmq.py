@@ -1,21 +1,18 @@
-import json
 
 import networkx as nx
 
 from internal.config.config import AppConfig
 from internal.converter.converter import Converter
-from internal.entity.request import Request
-from internal.entity.response import GraphRes,ClusterizationRes
+from internal.entity.response import GraphRes
 from internal.entity.graph import GraphData,Link,Node
 from internal.entity.document import Document as DocumentEntity
 
 
-from internal.сlusterizer.group_builder import Groupbuilder
 from internal.сlusterizer.graph_builder import ClusterGraphBuilder
 
 
 import aio_pika
-from aio_pika import IncomingMessage, Message, ExchangeType
+from aio_pika import IncomingMessage, Message
 import logging
 from typing import List, Dict
 from collections import defaultdict
@@ -28,7 +25,6 @@ class RabbitMQServer:
         logger: logging.Logger,
         s3_client,
         convertor: Converter,
-        clusterizer: Groupbuilder,
             graphbuilder:ClusterGraphBuilder
     ):
         self.exchange = None
@@ -39,7 +35,6 @@ class RabbitMQServer:
         self.logger = logger
         self.s3_client = s3_client
         self.convertor = convertor
-        self.clusterizer = clusterizer
         self.graphbuilder = graphbuilder
     
 

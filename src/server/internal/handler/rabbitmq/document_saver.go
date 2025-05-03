@@ -1,13 +1,15 @@
 package rabbitmq
 
 import (
-	"clusterlizer/internal/entity"
-	requestsrvc "clusterlizer/internal/service/request"
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"log"
+
+	"clusterlizer/internal/entity"
+	requestsrvc "clusterlizer/internal/service/request"
+
+	"go.uber.org/zap"
 )
 
 //type documentSaverParams struct {
@@ -69,6 +71,7 @@ func (h Handler) DocumentSaver() error {
 
 	return nil
 }
+
 func (h Handler) decodeDocumentSaverMsg(b []byte) (entity.DocumentSaverReq, error) {
 	var input entity.DocumentSaverReq
 	if err := json.Unmarshal(b, &input); err != nil {
@@ -79,5 +82,4 @@ func (h Handler) decodeDocumentSaverMsg(b []byte) (entity.DocumentSaverReq, erro
 		return entity.DocumentSaverReq{}, fmt.Errorf("nil id")
 	}
 	return input, nil
-
 }

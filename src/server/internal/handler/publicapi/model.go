@@ -1,9 +1,10 @@
 package publicapi
 
 import (
-	"clusterlizer/internal/entity"
 	"errors"
 	"fmt"
+
+	"clusterlizer/internal/entity"
 )
 
 const (

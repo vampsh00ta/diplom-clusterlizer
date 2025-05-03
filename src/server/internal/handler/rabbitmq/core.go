@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	requestsrvc "clusterlizer/internal/service/request"
+
 	rabbitmq "github.com/rabbitmq/amqp091-go"
 
 	"go.uber.org/zap"
@@ -23,7 +24,6 @@ func New(
 	cfg Config,
 	log *zap.SugaredLogger,
 	requestSrvc requestsrvc.Service,
-
 ) Handler {
 	return Handler{
 		ch:          ch,

@@ -2,20 +2,21 @@ package publicapi
 
 import (
 	"bytes"
+	"fmt"
+	"mime/multipart"
+	"strconv"
+	"time"
+
 	"clusterlizer/internal/entity"
 	documentsrvc "clusterlizer/internal/service/document"
 	filesrvc "clusterlizer/internal/service/file"
 	requestsrvc "clusterlizer/internal/service/request"
 
 	s3 "clusterlizer/internal/service/s3"
-	"strconv"
-	"time"
 
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"mime/multipart"
 )
 
 type Handler struct {
@@ -32,7 +33,6 @@ func New(
 	requestSrvc requestsrvc.Service,
 	s3Srvc s3.Service,
 	fileSrvc filesrvc.Service,
-
 ) *Handler {
 	return &Handler{
 		log:          log,

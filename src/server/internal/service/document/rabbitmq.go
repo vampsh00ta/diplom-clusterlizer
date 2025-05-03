@@ -1,10 +1,12 @@
 package document
 
 import (
-	"clusterlizer/internal/storage"
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"clusterlizer/internal/storage"
+
 	rabbitmq "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
@@ -18,7 +20,8 @@ func NewRabbiqMQ(
 	cfg RabbitMQConfig,
 	producer *rabbitmq.Channel,
 	storage storage.Storage,
-	log *zap.SugaredLogger) *RabbitMQImpl {
+	log *zap.SugaredLogger,
+) *RabbitMQImpl {
 	return &RabbitMQImpl{
 		cfg:      cfg,
 		producer: producer,

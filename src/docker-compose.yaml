@@ -11,11 +11,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
+    volumes:
+          - ~/.aws:/root/.aws:ro
     networks:
       - db
       - rabbitmq
-  model:
+  clusterizer:
     build:
       context: ./clusterizer
       dockerfile: Dockerfile
@@ -30,7 +31,8 @@ services:
 #        condition: service_healthy
     environment:
       CONFIG_PATH: prod.yaml
-
+    volumes:
+          - ~/.aws:/root/.aws:ro
     networks:
       - db
       - rabbitmq

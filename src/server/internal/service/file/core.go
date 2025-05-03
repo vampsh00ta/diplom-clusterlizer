@@ -1,14 +1,13 @@
 package file
 
 import (
+	"context"
+	"fmt"
+
 	"clusterlizer/internal/entity"
 	"clusterlizer/internal/storage"
-	"fmt"
-	"go.uber.org/zap"
-)
 
-import (
-	"context"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -18,7 +17,8 @@ type Service interface {
 
 func New(
 	storage storage.Storage,
-	log *zap.SugaredLogger) *FileImpl {
+	log *zap.SugaredLogger,
+) *FileImpl {
 	return &FileImpl{
 		storage: storage,
 		log:     log,

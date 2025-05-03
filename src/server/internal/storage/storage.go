@@ -1,9 +1,10 @@
 package storage
 
 import (
+	"context"
+
 	"clusterlizer/internal/entity"
 	"clusterlizer/pkg/pgxclient"
-	"context"
 )
 
 type Storage interface {

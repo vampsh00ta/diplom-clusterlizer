@@ -12,7 +12,7 @@ class Converter:
     def __init__(self,logger:logging.Logger):
         self.logger = logger
     def file_to_str(self, data:bytes)->DocumentEntity:
-        self.logger.info(f"convert file to str")
+        self.logger.info("convert file to str")
 
         res = None
         if data[:4] == b"%PDF":
@@ -50,7 +50,7 @@ class Converter:
                 return filenames["files"]
             else:
                 raise ValueError("Unexpected message format")
-        except Exception as e:
+        except Exception:
             return []
 
     def parse_message(self,raw_message: bytes) -> Request:

@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         formData.append('group_count', 1);
 
-        setStatus('Uploading files...', false);
+        setStatus('Загрузка файлов...', false);
         document.getElementById('upload-btn').disabled = true;
 
         try {
@@ -70,7 +70,7 @@ function startPolling(uuid) {
             if (!res.ok) throw new Error(data.error || res.statusText);
             clearInterval(pollInterval);
             renderGraph(data.result);
-            setStatus('Report ready!', false);
+            setStatus('Отчет готов', false);
             document.getElementById('new-request').style.display = 'inline-block';
         } catch (err) {
             console.error('Polling error:', err);

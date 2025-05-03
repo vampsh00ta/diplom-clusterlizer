@@ -1,8 +1,10 @@
 package postgresrep
 
 import (
-	"clusterlizer/pkg/utils"
 	"fmt"
+
+	"clusterlizer/pkg/utils"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -17,6 +19,4 @@ func patchQueryOptional[T any](
 	return query
 }
 
-var (
-	errNoRows = fmt.Errorf("no result")
-)
+var errNoRows = fmt.Errorf("no result")

@@ -20,6 +20,7 @@ func NewPgxManager(db Client) DBManager {
 		ctxm: NewCtxManager(db),
 	}
 }
+
 func (p pgxManager) Client(ctx context.Context) (Client, error) {
 	val := p.ctxm.Get(ctx)
 	ctxClient, ok := val.(Client)

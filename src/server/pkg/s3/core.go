@@ -40,12 +40,12 @@ func (c ClientImpl) Upload(ctx context.Context, key string, fileBytes []byte) er
 	}
 	return nil
 }
+
 func (c ClientImpl) Get(ctx context.Context, key string) ([]byte, error) {
 	output, err := c.s3.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("s3 get: %w", err)
 	}

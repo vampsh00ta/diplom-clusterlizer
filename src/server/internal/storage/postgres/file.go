@@ -1,10 +1,12 @@
 package postgresrep
 
 import (
-	"clusterlizer/internal/entity"
-	"clusterlizer/internal/storage"
 	"context"
 	"fmt"
+
+	"clusterlizer/internal/entity"
+	"clusterlizer/internal/storage"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -46,7 +48,6 @@ func (s *Storage) GetFileByKey(ctx context.Context, key string) (entity.File, er
 	rows, err := client.Query(ctx, q, args...)
 	if err != nil {
 		return entity.File{}, pgError(fmt.Errorf("row query: %w", err))
-
 	}
 	defer rows.Close()
 
@@ -60,7 +61,6 @@ func (s *Storage) GetFileByKey(ctx context.Context, key string) (entity.File, er
 
 func (s *Storage) CreateFile(ctx context.Context, params storage.CreateFileParams) (entity.File, error) {
 	client, err := s.db.Client(ctx)
-
 	if err != nil {
 		return entity.File{}, fmt.Errorf("client: %w", err)
 	}
@@ -71,7 +71,6 @@ func (s *Storage) CreateFile(ctx context.Context, params storage.CreateFileParam
 		Suffix("RETURNING *").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
-
 	if err != nil {
 		return entity.File{}, fmt.Errorf("query builder: %w", err)
 	}

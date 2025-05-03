@@ -1,11 +1,12 @@
 package main
 
 import (
-	"clusterlizer/internal/app/publicapi"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+
+	"clusterlizer/internal/app/publicapi"
 )
 
 const localConfigPath = "./local_config.yaml"

@@ -1,10 +1,11 @@
 package document
 
 import (
-	"clusterlizer/internal/storage"
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"clusterlizer/internal/storage"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
@@ -13,7 +14,8 @@ import (
 func NewKafka(
 	producer *kafka.Writer,
 	storage storage.Storage,
-	log *zap.SugaredLogger) *KafkaImpl {
+	log *zap.SugaredLogger,
+) *KafkaImpl {
 	return &KafkaImpl{
 		producer: producer,
 		storage:  storage,

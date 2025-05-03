@@ -1,8 +1,9 @@
 package publicapi
 
 import (
-	"clusterlizer/internal/entity"
 	"strings"
+
+	"clusterlizer/internal/entity"
 )
 
 func correctFileFormat(file string) bool {

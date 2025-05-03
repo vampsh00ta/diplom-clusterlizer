@@ -1,9 +1,10 @@
 package postgresrep
 
 import (
-	"clusterlizer/pkg/pgxclient"
 	"context"
 	"fmt"
+
+	"clusterlizer/pkg/pgxclient"
 )
 
 func (s *Storage) DoInTransaction(ctx context.Context, f pgxclient.TxFunc) error {

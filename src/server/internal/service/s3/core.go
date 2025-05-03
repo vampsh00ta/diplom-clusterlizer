@@ -1,11 +1,13 @@
 package s3
 
 import (
-	"clusterlizer/pkg/s3"
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"strconv"
+
+	"clusterlizer/pkg/s3"
+
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -22,7 +24,6 @@ type ServiceImpl struct {
 func New(
 	log *zap.SugaredLogger,
 	client s3.Client,
-
 ) *ServiceImpl {
 	return &ServiceImpl{
 		client: client,

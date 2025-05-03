@@ -1,6 +1,8 @@
 package publicapi
 
 import (
+	"context"
+
 	rabbitmqconsumer "clusterlizer/internal/handler/rabbitmq"
 	documentsrvc "clusterlizer/internal/service/document"
 	filesrvc "clusterlizer/internal/service/file"
@@ -10,7 +12,7 @@ import (
 	psqlrep "clusterlizer/internal/storage/postgres"
 	"clusterlizer/pkg/pgxclient"
 	s3client "clusterlizer/pkg/s3"
-	"context"
+
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	rabbitmq "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
@@ -27,6 +29,7 @@ func NewLogger() *zap.SugaredLogger {
 	sugar := logger.Sugar()
 	return sugar
 }
+
 func Run(cfg *Config) {
 	ctx := context.Background()
 	defer ctx.Done()
@@ -77,12 +80,12 @@ func Run(cfg *Config) {
 		logger.Fatal("rabbitmq producer sender: %w", zap.Error(err))
 	}
 
-	//Storage
+	// Storage
 	logger.Info("starting storage...")
 
 	storage := psqlrep.New(pg)
 
-	//Services
+	// Services
 	logger.Info("starting services...")
 
 	//documentImpl := documentsrvc.NewKafka(
