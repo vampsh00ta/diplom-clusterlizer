@@ -17,7 +17,6 @@ type (
 		App      App      `yaml:"app"`
 		PG       PG       `yaml:"postgres"`
 		Front    Front    `yaml:"front"`
-		Kafka    Kafka    `yaml:"kafka"`
 		RabbitMQ RabbitMQ `yaml:"rabbitmq"`
 		S3       S3       `yaml:"s3"`
 	}
@@ -50,25 +49,6 @@ type (
 )
 
 type (
-	Kafka struct {
-		Producer KafkaProducer `yaml:"producer"`
-		Consumer KafkaConsumer `yaml:"consumer"`
-	}
-	KafkaProducer struct {
-		DocumentNameSender KafkaBase `yaml:"document_name_sender"`
-	}
-	KafkaConsumer struct {
-		DocumentSaver KafkaBase `yaml:"document_saver"`
-	}
-
-	KafkaBase struct {
-		URL       string ` yaml:"url"`
-		Topic     string `yaml:"topic"`
-		MaxBytes  int    ` yaml:"max_bytes"`
-		Partition int    `yaml:"partition"`
-		Group     string `yaml:"group"`
-	}
-
 	RabbitMQ struct {
 		Producer RabbitMQProducer `yaml:"producer"`
 		Consumer RabbitMQConsumer `yaml:"consumer"`

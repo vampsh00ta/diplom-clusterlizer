@@ -26,7 +26,6 @@ func registerHTPP(
 	s3Srvc s3srvc.Service,
 	fileSrvc filesrvc.Service,
 	// authMiddleware := keyauth.New(keyauth.Config{
-
 ) *fiber.App {
 	app := newFiber(cfg, log)
 	//

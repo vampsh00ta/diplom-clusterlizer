@@ -9,19 +9,6 @@ logger:
 front:
   static: './front'
 
-#kafka:
-#  producer:
-#    document_name_sender:
-#      url: kafka:9092
-#      topic: document_sender
-#      #      max_bytes: 10**20
-#      group: document_sender-group-a
-#  consumer:
-#    document_saver:
-#      url: localhost:9092
-#      topic: document_sender
-#      max_bytes: 10mb
-
 rabbitmq:
   producer:
     document_name_sender:
