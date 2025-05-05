@@ -12,6 +12,5 @@ class Group(BaseModel):
 
 
 class Request(BaseModel):
-    group_count:int
     keys:List[str]
 

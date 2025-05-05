@@ -9,6 +9,5 @@ type Service interface {
 }
 
 type SendDocumentParams struct {
-	GroupCount int      `json:"group_count"`
-	Keys       []string `json:"keys"`
+	Keys []string `json:"keys"`
 }

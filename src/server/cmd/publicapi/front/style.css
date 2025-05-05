@@ -1,72 +1,169 @@
-body {
-    font-family: Arial, sans-serif;
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Reset & Global */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
-h1 {
-    text-align: center;
-}
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-input[type="file"] {
-    padding: 6px;
-}
-input[type="number"] {
-    width: 100px;
-    padding: 6px;
-}
-button {
-    padding: 10px;
-    border: none;
-    background-color: #007BFF;
-    color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-}
-button:disabled {
-    background-color: #aaa;
-    cursor: not-allowed;
-}
-#status {
-    margin-top: 20px;
-    font-weight: bold;
-    text-align: center;
-}
-#new-request {
-    display: none;
-    margin-top: 10px;
-    background-color: #28A745;
+:root {
+    --color-primary: #4F46E5;
+    --color-secondary: #A78BFA;
+    --color-success: #10B981;
+    --color-error: #EF4444;
+    --color-bg: #F9FAFB;
+    --color-surface: #FFFFFF;
+    --color-text: #1F2937;
+    --radius: 0.5rem;
+    --transition: 0.3s ease;
+    --font-sans: 'Inter', sans-serif;
 }
 
-/* Граф */
-#graph-container {
-    width: 100%;
-    height: 500px;
-    position: relative;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #fff;
-    overflow: hidden;
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-bg: #1F2937;
+        --color-surface: #374151;
+        --color-text: #F9FAFB;
+    }
 }
+
+/* Full-screen layout */
+html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* Main container as flex column filling viewport */
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-surface);
+    border-radius: 0;
+    box-shadow: none;
+    padding: 1rem;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Buttons centered at top */
+#upload-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+#new-request {
+    display: block;
+    margin: 0 auto 1rem;
+}
+
+input[type="file"] {
+    padding: 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: var(--radius);
+    cursor: pointer;
+    background-color: #FFF;
+    font-family: var(--font-sans);
+}
+
+button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color var(--transition), transform var(--transition);
+    font-family: var(--font-sans);
+}
+
+button#upload-btn {
+    background-color: var(--color-primary);
+    color: #FFF;
+}
+button#upload-btn:disabled {
+    background-color: #9CA3AF;
+    cursor: not-allowed;
+}
+button#upload-btn:hover:not(:disabled) {
+    background-color: var(--color-secondary);
+}
+
+button#new-request {
+    background-color: var(--color-success);
+    color: #FFF;
+    margin: 0 auto 1rem;
+}
+button#new-request:hover {
+    filter: brightness(1.1);
+}
+
+#status {
+    text-align: center;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+#status.error {
+    color: var(--color-error);
+}
+
+/* Graph canvas fills remaining space */
+#graph-container {
+    flex: 1;
+    width: 100%;
+    background-color: var(--color-surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 1rem;
+    position: relative;
+}
+
+/* Node labels: smaller, rectangle fits inside the vertex */
 .node-label {
+    font-size: 0.75rem;
+    color: #FFF;
+    background-color: var(--color-primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    white-space: nowrap;
     position: absolute;
-    left: 0;    /* эти значения задаются в JS */
-    top: 0;     /* эти значения задаются в JS */
-    transform: translate(-50%, -50%); /* центрируем по обоим осям */
-    text-decoration: none;            /* убираем подчёркивание */
-    font-size: 12px;
+    transform: translate(-50%, -50%);
+    transition: background-color var(--transition), transform var(--transition);
     pointer-events: auto;
     cursor: pointer;
-    /* можно добавить цвет, если нужно */
 }
 
 .node-label:hover {
-    text-decoration: none;
+    background-color: var(--color-secondary);
+    transform: translate(-50%, -50%) scale(1.05);
 }
+
+
+
+/* Hide "Сделать еще запрос" by default; shown via JS if cookie has uuid */
+button#new-request {
+    display: none;
+}
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+    #upload-form {
+        flex-direction: column;
+    }
+    button#new-request {
+        margin-top: 0.5rem;
+    }
+}
+

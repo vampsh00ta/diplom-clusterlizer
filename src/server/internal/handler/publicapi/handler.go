@@ -44,15 +44,13 @@ func New(
 }
 
 type uploadFilesRequest struct {
-	GroupCount int
-	Files      [][]byte
+	Files [][]byte
 }
 
 type uploadFilesResponse struct {
 	UUID uuid.UUID `json:"uuid"`
 }
 
-// похорошему нужно добавить temporal, чтобы добиться какой-никакой транзитивности
 func (h *Handler) UploadFiles(ctx *fiber.Ctx) error {
 	id := uuid.New()
 
@@ -86,8 +84,7 @@ func (h *Handler) UploadFiles(ctx *fiber.Ctx) error {
 	}
 
 	if err := h.documentSrvc.SendDocumentNames(ctx.Context(), documentsrvc.SendDocumentParams{
-		GroupCount: req.GroupCount,
-		Keys:       fileNames,
+		Keys: fileNames,
 	}); err != nil {
 		h.log.Error(err)
 
@@ -209,28 +206,8 @@ func (h *Handler) getUploadFilesFromForm(ctx *fiber.Ctx) (uploadFilesRequest, er
 		}
 		files = append(files, fileBytes)
 	}
-	groupCountForm := form.Value["group_count"]
-	if len(groupCountForm) != 1 {
-		h.log.Error(fmt.Errorf(errSeveralGroupCountForms))
-
-		return uploadFilesRequest{}, fmt.Errorf(errSeveralGroupCountForms)
-	}
-	groupCountStr := groupCountForm[0]
-	groupCount, err := strconv.Atoi(groupCountStr)
-	if err != nil {
-		h.log.Error(err)
-
-		return uploadFilesRequest{}, err
-	}
-
-	if len(files) < groupCount {
-		h.log.Error(fmt.Errorf(errLessFilesThanGroupCount))
-
-		return uploadFilesRequest{}, fmt.Errorf(errLessFilesThanGroupCount)
-	}
 
 	return uploadFilesRequest{
-		Files:      files,
-		GroupCount: groupCount,
+		Files: files,
 	}, nil
 }

@@ -3,6 +3,13 @@ let pollInterval = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const currReq = getCookie('curr_req');
+
+
+    // Show "Сделать еще запрос" button only if curr_req cookie exists
+    const newReqBtn = document.getElementById('new-request');
+    if (currReq) {
+        newReqBtn.style.display = 'block';
+    }
     if (currReq) startPolling(currReq);
 
     document.getElementById('upload-form').addEventListener('submit', async (e) => {
@@ -53,7 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function startPolling(uuid) {
     document.getElementById('upload-form').style.display = 'none';
     document.getElementById('new-request').style.display = 'none';
-    setStatus('Processing... Please wait.', false);
+    const newReqBtn = document.getElementById('new-request');
+    newReqBtn.style.display = 'block';                 // Ensure button visible during processing
+    setStatus('Обработка... пожалуйста, подожди')
     pollInterval = setInterval(async () => {
         try {
             const res = await fetch(`${API_BASE}/getClusterizations/${uuid}`);
@@ -156,7 +165,7 @@ function renderGraph(graphData) {
         const circle = document.createElementNS(svgNS, 'circle');
         circle.setAttribute('cx', x);
         circle.setAttribute('cy', y);
-        circle.setAttribute('r', 28);
+        circle.setAttribute('r', 40);
         circle.setAttribute('fill', clusterColors[node.cluster]);
         circle.setAttribute('data-id', node.id);
         circle.style.cursor = 'move';
