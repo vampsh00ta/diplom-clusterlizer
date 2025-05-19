@@ -54,25 +54,7 @@ class RabbitMQServer:
             await self.connection.close()
             self.logger.info("RabbitMQ consumer stopped")
 
-    def __get_files_from_s3(self, filenames: List[str]) -> Dict[str, DocumentEntity]:
-        res: Dict[str, DocumentEntity] = defaultdict()
-        for filename in filenames:
-            self.logger.info(f"Fetching {filename} from S3...")
 
-            response = self.s3_client.get_object(
-                Bucket=self.config.s3.bucket,
-                Key=filename
-            )
-
-            body = response["Body"].read()
-            data = self.convertor.file_to_str(body)
-            if data is None:
-                self.logger.error(f"Unknown type {filename}, {len(response['Body'].read())} bytes")
-                continue
-
-            self.logger.info(f"Fetched {filename}, {len(response['Body'].read())} bytes")
-            res[filename] = data
-        return res
 
     async def handle_message(self, message: IncomingMessage):
         try:
@@ -81,9 +63,8 @@ class RabbitMQServer:
 
             self.logger.info(f"Received messages: {req.keys}")
 
-            id_texts = self.__get_files_from_s3(req.keys)
+            id_texts = self.s3_client.get_files_by_ids(req.keys)
 
-            # clustered_texts = self.clusterizer.do(id_texts,group_count = req.group_count)
             clustered_texts = self.graphbuilder.build_cluster_graph(id_texts)
 
             id = req.keys[0].split("_")[0]

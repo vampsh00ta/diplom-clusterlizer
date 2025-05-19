@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from internal.сlusterizer.stop_words import stopwords
 import networkx as nx
 import numpy as np
@@ -11,7 +11,8 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from internal.entity.document import Document as DocumentEntity
 from keybert import KeyBERT
-
+from sklearn.metrics import silhouette_score, davies_bouldin_score, silhouette_samples
+import matplotlib.pyplot as plt
 
 import pymorphy3
 from razdel import tokenize
@@ -121,7 +122,6 @@ class ClusterGraphBuilder:
     def build_cluster_graph(
         self,
         id_texts: Dict[str, DocumentEntity],
-        preprocess: bool = True,
         threshold: Optional[float] = None,
         **cluster_kwargs
     ) -> nx.Graph:
@@ -154,7 +154,7 @@ class ClusterGraphBuilder:
         labels = clusterer.fit_predict(embeddings)
 
         # Матрица сходства
-        sim_matrix = cosine_similarity(embeddings)  # импортируйте из sklearn
+        sim_matrix = cosine_similarity(embeddings)
 
         graph = nx.Graph()
         titles = self.generate_titles({id_: text for id_, text in zip(ids, texts)})
@@ -181,5 +181,53 @@ class ClusterGraphBuilder:
 
         self.logger.info("Generated %d nodes and %d edges", graph.number_of_nodes(), graph.number_of_edges())
         return graph
+
+    def evaluate_cluster_quality(
+            self,
+            embeddings: np.ndarray,
+            labels: np.ndarray,
+            visualize: bool = True,
+            figsize: Tuple[int, int] = (10, 6)
+    ) -> Dict[str, float]:
+        """
+        Отдельный метод для оценки качества кластеризации.
+        Вычисляет Silhouette Score и Davies-Bouldin Index.
+        При visualize=True строит силиэтный график.
+        """
+        metrics: Dict[str, float] = {}
+        valid_idx = labels >= 0
+        if len(set(labels[valid_idx])) > 1:
+            silhouette_avg = silhouette_score(embeddings[valid_idx], labels[valid_idx])
+            metrics['silhouette_score'] = silhouette_avg
+            if visualize:
+                sample_silhouette_values = silhouette_samples(embeddings[valid_idx], labels[valid_idx])
+                y_lower = 10
+                plt.figure(figsize=figsize)
+                for cluster in np.unique(labels[valid_idx]):
+                    ith_vals = sample_silhouette_values[labels[valid_idx] == cluster]
+                    ith_vals.sort()
+                    size = ith_vals.shape[0]
+                    y_upper = y_lower + size
+                    plt.fill_betweenx(
+                        np.arange(y_lower, y_upper),
+                        0, ith_vals
+                    )
+                    plt.text(-0.05, y_lower + 0.5 * size, str(cluster))
+                    y_lower = y_upper + 10
+                plt.title('Silhouette plot for various clusters')
+                plt.xlabel('Silhouette coefficient values')
+                plt.ylabel('Cluster label')
+                plt.axvline(x=silhouette_avg, color='red', linestyle='--')
+                plt.show()
+        else:
+            metrics['silhouette_score'] = float('nan')
+            if visualize:
+                self.logger.warning("Not enough clusters for silhouette plot.")
+        if len(set(labels)) > 1:
+            db_index = davies_bouldin_score(embeddings, labels)
+            metrics['davies_bouldin'] = db_index
+        else:
+            metrics['davies_bouldin'] = float('nan')
+        return metrics
 
 

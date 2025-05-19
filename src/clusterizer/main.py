@@ -11,6 +11,7 @@ from internal.config.config import load_config
 from internal.converter.converter import Converter
 
 from internal.consumer.rabbitmq import RabbitMQServer
+from internal.s3.client import S3
 
 from internal.сlusterizer.graph_builder import ClusterGraphBuilder
 
@@ -33,13 +34,18 @@ s3_client = boto3.client(
     "s3"
 )
 
+s3_logger = logging.getLogger("s3")
+
+print(cfg.s3)
+s3Service = S3(s3_client=s3_client,logger=s3_logger,config=cfg.s3,convertor=converter)
+
 graphbuilder = ClusterGraphBuilder()
 
 rabbitmq_url = cfg.rabbitmq.url
 rabbitmqServer = RabbitMQServer(
     config=cfg,
     logger=rabbitmq_logger,
-    s3_client=s3_client,
+    s3_client=s3Service,
     convertor=converter,
 graphbuilder = graphbuilder)
 
