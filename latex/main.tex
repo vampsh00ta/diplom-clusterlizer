@@ -1,0 +1,85 @@
+\documentclass{styles/diploma/diploma}
+%\usepackage[backend=biber]{biblatex}
+\addbibresource{main.bib}
+
+\begin{document}
+
+%\part{title}
+\student{Трофимов Владислав Олегович}
+\group{М8О-403Б-21}
+\theme{Разработка системы тематической кластеризации научных работ на основе семантического подхода  с визуализацией в графовом интерфейсе}
+
+\supervisor{Кан Анна Владимировна}
+\secondConsultant{---}
+\reviewer{---}
+
+\faculty{№ 8 <<Компьютерные науки и прикладная математика>>}
+\department{805}
+\speciality{01.03.04 <<Прикладная математика>>}
+\profile{Математическое и программное обеспечение систем обработки информации и управления}
+
+\departmentFullName{№ 805}
+\headOfDepartment{Пантелеев Андрей Владимирович}
+
+% Дата. Оставляем пустое место для дня
+\date{\uline{\hspace{24pt}} мая \the\year\ года}
+
+\input{contents/glossary}
+\input{contents/terms}
+
+% Иллюстрации всегда по центру
+\makeatletter
+\g@addto@macro\@floatboxreset\centering
+\makeatother
+
+\maketitle
+
+% \includepdf[pages=-]{extra/task} % Задание
+\setcounter{page}{2} % Устанавливает счётчик страниц
+
+\include{contents/0-abstract} % Реферат
+
+\tableofcontents % Содержание 
+% \termsanddefenitions % Термины и определения
+%\listofabbreviations % Перечень сокращений и обозначений
+ 
+\include{contents/1-introduction} % Введение
+
+\include{contents/2-teory-1}  % Теория
+\include{contents/2-teory-word2vec} 
+\include{contents/2-teory-bert}  % Теория
+\include{contents/2-teory-sbert}  % Теория
+\include{contents/2-teory-microservice}  % Теория
+\include{contents/2-teory-rabbitmq}  % Теория
+\include{contents/2-teory-postgresql}  % Теория
+\include{contents/3-practic}  % Теория
+\include{contents/4-conclusion}  % Теория
+
+
+% Теория
+
+%\include{contents/2-01-microservice_architecture}
+% \include{contents/2-02.practice}
+% \include{contents/2-00-compilation} % Основная часть
+% \include{contents/2-01-titlepage}
+% \include{contents/2-02-techtask}
+% \include{contents/2-03-abstract}
+% \include{contents/2-04-glossary}
+% \include{contents/9-05-figures}
+% \include{contents/2-06-citations}
+% \include{contents/2-07-tables}
+% \include{contents/2-08-enums}
+% \include{contents/2-09-formulas}
+% \include{contents/2-10-math}
+% \include{contents/2-11-algorithms}
+% \include{contents/2-12-listings}
+    
+\include{contents/3-conclusion} % Заключение
+
+%\printbibliography % Список литературы
+
+\appendix % Приложения
+% \include{contents/4-appendix-a}% \include{contents/4-appendix-b}
+% \include{contents/4-appendix-c}
+% \include{contents/4-appendix-d}
+\end{document}
